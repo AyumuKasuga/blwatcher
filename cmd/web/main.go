@@ -49,7 +49,6 @@ func main() {
 
 	http.HandleFunc("/address/", func(w http.ResponseWriter, r *http.Request) {
 		address := r.URL.Path[len("/address/") : 9+42]
-		fmt.Println(address)
 		if len(address) != 42 {
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
