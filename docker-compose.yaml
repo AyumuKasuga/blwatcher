@@ -13,18 +13,13 @@ services:
       resources:
         limits:
           memory: 50M
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
   migration:
     build: .
+    command: /app/migrate
     env_file:
     - ./.env
     depends_on:
-      db:
-        condition: service_healthy
+    - db
     restart: "no"
   web:
     build: .
@@ -34,8 +29,7 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     restart: unless-stopped
     deploy:
       resources:
@@ -47,8 +41,7 @@ services:
     env_file:
       - ./.env
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     restart: unless-stopped
     deploy:
       resources:
