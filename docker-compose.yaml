@@ -14,10 +14,10 @@ services:
     - ./.env
     depends_on:
     - db
-    restart: no
+    restart: "no"
   web:
     build: .
-    command: /app/migrate && /app/web
+    command: /app/web
     env_file:
       - ./.env
     ports:
