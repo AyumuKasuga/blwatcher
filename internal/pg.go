@@ -36,11 +36,8 @@ func (s *EventStorage) Store(event *blwatcher.Event) error {
 	}
 	_, err = s.conn.Exec(context.Background(), `
 		INSERT INTO events (date, contract, address, tx_hash, block_number, event_type, amount)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING
 	`, event.Date, event.Contract.Symbol, event.Address, event.Tx, event.BlockNumber, event.Type, event.Amount)
-	if err == pgx.ErrNoRows {
-		return nil
-	}
 	if err != nil {
 		return err
 	}
