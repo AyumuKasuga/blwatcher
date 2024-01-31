@@ -48,6 +48,7 @@ type Event struct {
 type EventStorage interface {
 	GetLastEventBlock() (uint64, error)
 	GetLatestEvents(limit uint64) ([]*Event, error)
+	GetEventsByAddress(address string) ([]*Event, error)
 	Store(event *Event) error
 }
 

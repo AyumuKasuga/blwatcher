@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS events (
 
 CREATE INDEX IF NOT EXISTS events_date_idx ON events (date DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS events_tx_hash_idx ON events (tx_hash);
+CREATE INDEX IF NOT EXISTS events_address_idx ON events (address);
 `
 
 func main() {

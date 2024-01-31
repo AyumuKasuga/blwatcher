@@ -84,3 +84,25 @@ func (s *EventStorage) GetLatestEvents(limit uint64) ([]*blwatcher.Event, error)
 	}
 	return entries, nil
 }
+
+func (s *EventStorage) GetEventsByAddress(address string) ([]*blwatcher.Event, error) {
+	rows, err := s.conn.Query(context.Background(), `
+		SELECT date, contract, address, tx_hash, block_number, event_type, amount FROM events WHERE address = $1 ORDER BY date DESC
+	`, address)
+	if err == pgx.ErrNoRows {
+		return []*blwatcher.Event{}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	entries := []*blwatcher.Event{}
+	for rows.Next() {
+		var e blwatcher.Event
+		if err := rows.Scan(&e.Date, &e.Contract.Symbol, &e.Address, &e.Tx, &e.BlockNumber, &e.Type, &e.Amount); err != nil {
+			return nil, err
+		}
+		entries = append(entries, &e)
+	}
+	return entries, nil
+}

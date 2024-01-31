@@ -1,6 +1,7 @@
 package main
 
 import (
+	"blwatcher"
 	"blwatcher/internal"
 	"context"
 	"fmt"
@@ -10,13 +11,6 @@ import (
 	"net/http"
 	"os"
 )
-
-// Event represents a row in your events table
-type Event struct {
-	ID   int
-	Name string
-	// Add other fields as necessary
-}
 
 func main() {
 	ctx := context.Background()
@@ -35,19 +29,47 @@ func main() {
 	}
 	defer server.Shutdown(ctx)
 
-	tmpl := template.Must(template.ParseFiles("templates/table.html"))
+	table_tmpl := template.Must(template.ParseFiles("templates/table.html"))
+	address_tmpl := template.Must(template.ParseFiles("templates/address.html"))
+
+	type addressTmplData = struct {
+		Address string
+		Events  []*blwatcher.Event
+	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// Query database
 		events, err := eventStorage.GetLatestEvents(0)
 		if err != nil {
 			log.Printf("Error getting events: %v", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
+		table_tmpl.Execute(w, events)
+	})
 
-		// Execute template
-		tmpl.Execute(w, events)
+	http.HandleFunc("/address/", func(w http.ResponseWriter, r *http.Request) {
+		address := r.URL.Path[len("/address/"):]
+		if len(address) != 42 {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+		events, err := eventStorage.GetEventsByAddress(address)
+		if err != nil {
+			log.Printf("Error getting events: %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		if len(events) == 0 {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
+
+		addressTmplData := addressTmplData{
+			Address: address,
+			Events:  events,
+		}
+		address_tmpl.Execute(w, addressTmplData)
 	})
 
 	http.HandleFunc("/rss", func(w http.ResponseWriter, r *http.Request) {
@@ -59,14 +81,13 @@ func main() {
 
 		events, err := eventStorage.GetLatestEvents(100)
 
-		// Assuming 'events' is populated with your data
 		for _, e := range events {
 			feed.Items = append(feed.Items, &feeds.Item{
 				Title:       fmt.Sprintf("%s %s %s %s", e.Type, e.Address, e.Contract.Symbol, e.Date),
-				Link:        &feeds.Link{Href: fmt.Sprintf("https://etherscan.io/tx/%s", e.Tx)},
+				Link:        &feeds.Link{Href: fmt.Sprintf("https://bl.dzen.ws/address/%s", e.Address)},
 				Description: fmt.Sprintf("%s %s %s %s", e.Type, e.Address, e.Contract.Symbol, e.Date),
 				Created:     e.Date,
-				Id:          e.Tx,
+				Id:          fmt.Sprintf("https://bl.dzen.ws/address/%s", e.Address),
 			})
 		}
 
