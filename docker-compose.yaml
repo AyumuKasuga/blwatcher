@@ -7,6 +7,7 @@ services:
     - POSTGRES_DB=postgres
     volumes:
     - bl-db-data:/var/lib/postgresql/data/
+    restart: unless-stopped
   migration:
     build: .
     command: /app/migrate
@@ -24,7 +25,7 @@ services:
       - "8080:8080"
     depends_on:
       - db
-    restart: on-failure
+    restart: unless-stopped
   watcher:
     build: .
     command: /app/watcher
@@ -32,7 +33,7 @@ services:
       - ./.env
     depends_on:
       - db
-    restart: on-failure
+    restart: unless-stopped
 
 volumes:
   bl-db-data:
