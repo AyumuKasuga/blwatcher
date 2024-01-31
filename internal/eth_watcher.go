@@ -18,9 +18,24 @@ import (
 	"blwatcher"
 )
 
-var addedBlackListSig = crypto.Keccak256Hash([]byte("AddedBlackList(address)"))
-var removedBlackListSig = crypto.Keccak256Hash([]byte("RemovedBlackList(address)"))
-var destroyedBlackFundsSig = crypto.Keccak256Hash([]byte("DestroyedBlackFunds(address,uint256)"))
+var addedBlackListSig = crypto.Keccak256Hash([]byte("AddedBlackList(address)"))                   // USDT
+var removedBlackListSig = crypto.Keccak256Hash([]byte("RemovedBlackList(address)"))               // USDT
+var destroyedBlackFundsSig = crypto.Keccak256Hash([]byte("DestroyedBlackFunds(address,uint256)")) // USDT
+var blacklistedSig = crypto.Keccak256Hash([]byte("Blacklisted(address)"))                         // USDC
+var unblacklistedSig = crypto.Keccak256Hash([]byte("UnBlacklisted(address)"))                     // USDC
+
+type Topic struct {
+	eventType blwatcher.EventType
+	funcName  string
+}
+
+var topics = map[common.Hash]Topic{
+	addedBlackListSig:      {blwatcher.AddBlacklistEvent, "AddedBlackList"},
+	removedBlackListSig:    {blwatcher.RemoveBlacklistEvent, "RemovedBlackList"},
+	destroyedBlackFundsSig: {blwatcher.DestroyBlackFundsEvent, "DestroyedBlackFunds"},
+	blacklistedSig:         {blwatcher.AddBlacklistEvent, "Blacklisted"},
+	unblacklistedSig:       {blwatcher.RemoveBlacklistEvent, "UnBlacklisted"},
+}
 
 type Watcher struct {
 	contractAddresses []common.Address
@@ -67,7 +82,7 @@ func (w *Watcher) Watch(ctx context.Context) error {
 	query := ethereum.FilterQuery{
 		Addresses: w.contractAddresses,
 		Topics: [][]common.Hash{
-			{addedBlackListSig, removedBlackListSig, destroyedBlackFundsSig},
+			{addedBlackListSig, removedBlackListSig, destroyedBlackFundsSig, blacklistedSig, unblacklistedSig},
 		},
 		FromBlock: big.NewInt(int64(fromBlock)),
 	}
@@ -81,7 +96,7 @@ func (w *Watcher) Watch(ctx context.Context) error {
 	defer sub.Unsubscribe()
 
 	go func(ctx context.Context, client *ethclient.Client, fromBlock uint64) {
-		err := w.processPastEvents(ctx, client, fromBlock)
+		err := w.processPastEvents(ctx, client, query)
 		if err != nil {
 			panic(err)
 		}
@@ -105,14 +120,7 @@ func (w *Watcher) Watch(ctx context.Context) error {
 	}
 }
 
-func (w *Watcher) processPastEvents(ctx context.Context, client *ethclient.Client, fromBlock uint64) error {
-	query := ethereum.FilterQuery{
-		Addresses: w.contractAddresses,
-		Topics: [][]common.Hash{
-			{addedBlackListSig, removedBlackListSig, destroyedBlackFundsSig},
-		},
-		FromBlock: big.NewInt(int64(fromBlock)),
-	}
+func (w *Watcher) processPastEvents(ctx context.Context, client *ethclient.Client, query ethereum.FilterQuery) error {
 	logs, err := client.FilterLogs(ctx, query)
 	if err != nil {
 		return err
@@ -147,56 +155,34 @@ func (w *Watcher) processLogs(ctx context.Context, client *ethclient.Client, vLo
 		return fmt.Errorf("unknown contract address %s", contractAddress)
 	}
 
-	if topic == addedBlackListSig {
-		event, err := w.contractAbiMap[vLog.Address].Unpack("AddedBlackList", vLog.Data)
-		if err != nil {
-			return err
-		}
-
-		blacklistedAddress := event[0].(common.Address)
-		w.eventChan <- &blwatcher.Event{
-			Date:        blockDate,
-			Contract:    contract,
-			Address:     blacklistedAddress.String(),
-			Tx:          vLog.TxHash.String(),
-			BlockNumber: vLog.BlockNumber,
-			Type:        blwatcher.AddBlacklistEvent,
-			Amount:      0,
-		}
-		return nil
-	} else if topic == removedBlackListSig {
-		event, err := w.contractAbiMap[vLog.Address].Unpack("RemovedBlackList", vLog.Data)
-		if err != nil {
-			return err
-		}
-		clearedAddress := event[0].(common.Address)
-		w.eventChan <- &blwatcher.Event{
-			Date:        blockDate,
-			Contract:    contract,
-			Address:     clearedAddress.String(),
-			Tx:          vLog.TxHash.String(),
-			BlockNumber: vLog.BlockNumber,
-			Type:        blwatcher.RemoveBlacklistEvent,
-			Amount:      0,
-		}
-		return nil
-	} else if topic == destroyedBlackFundsSig {
-		event, err := w.contractAbiMap[vLog.Address].Unpack("DestroyedBlackFunds", vLog.Data)
-		if err != nil {
-			return err
-		}
-		blacklistedAddress := event[0].(common.Address)
-		amount := event[1].(*big.Int).Int64()
-		w.eventChan <- &blwatcher.Event{
-			Date:        blockDate,
-			Contract:    contract,
-			Address:     blacklistedAddress.String(),
-			Tx:          vLog.TxHash.String(),
-			BlockNumber: vLog.BlockNumber,
-			Type:        blwatcher.DestroyBlackFundsEvent,
-			Amount:      amount,
-		}
-		return nil
+	t, found := topics[topic]
+	if !found {
+		return fmt.Errorf("unknown topic %s", topic.String())
 	}
-	return fmt.Errorf("unknown topic %s", topic.String())
+	var address common.Address
+	event, err := w.contractAbiMap[vLog.Address].Unpack(t.funcName, vLog.Data)
+	if err != nil {
+		return err
+	}
+	if len(vLog.Data) != 0 {
+		// Address is in the data
+		address = event[0].(common.Address)
+	} else {
+		// Address is in the topic
+		address = common.HexToAddress(vLog.Topics[1].String())
+	}
+	var amount int64
+	if t.eventType == blwatcher.DestroyBlackFundsEvent {
+		amount = event[1].(*big.Int).Int64()
+	}
+	w.eventChan <- &blwatcher.Event{
+		Date:        blockDate,
+		Contract:    contract,
+		Address:     address.String(),
+		Tx:          vLog.TxHash.String(),
+		BlockNumber: vLog.BlockNumber,
+		Type:        t.eventType,
+		Amount:      amount,
+	}
+	return nil
 }

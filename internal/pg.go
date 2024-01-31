@@ -42,7 +42,7 @@ func (s *EventStorage) Store(event *blwatcher.Event) error {
 		return err
 	}
 	err = tx.Commit(context.Background())
-	log.Printf("Stored event\t[%s]\t|%s|\t(%s)\n", event.Date, event.Type, event.Address)
+	log.Printf("Stored event\t[%s]\t|%s - %s|\t(%s)\n", event.Date, event.Contract.Symbol, event.Type, event.Address)
 	return nil
 }
 

@@ -20,6 +20,7 @@ func main() {
 	ctx := context.Background()
 	contracts := []blwatcher.Contract{
 		blwatcher.AddressContractMap[blwatcher.USDTContractAddress],
+		blwatcher.AddressContractMap[blwatcher.USDCContractAddress],
 	}
 	eventStorage := internal.NewEventStorage(
 		ctx,
