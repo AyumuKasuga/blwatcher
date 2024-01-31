@@ -140,6 +140,10 @@ func (w *Watcher) processLogs(ctx context.Context, client *ethclient.Client, vLo
 		return nil
 	}
 
+	if vLog.Removed {
+		return nil
+	}
+
 	block, err := client.BlockByNumber(ctx, big.NewInt(int64(vLog.BlockNumber)))
 	if err != nil {
 		panic(err)
