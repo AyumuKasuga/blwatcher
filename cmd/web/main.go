@@ -53,7 +53,7 @@ func main() {
 	http.HandleFunc("/rss", func(w http.ResponseWriter, r *http.Request) {
 		feed := &feeds.Feed{
 			Title:       "Latest blacklist events of ERC20 contracts (USDT) in Ethereum network",
-			Link:        &feeds.Link{Href: "http://bl.dzen.ws/rss"},
+			Link:        &feeds.Link{Href: "https://bl.dzen.ws/rss"},
 			Description: "Latest blacklist of ERC20 contracts (USDT) in Ethereum network",
 		}
 
