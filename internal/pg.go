@@ -38,6 +38,9 @@ func (s *EventStorage) Store(event *blwatcher.Event) error {
 		INSERT INTO events (date, contract, address, tx_hash, block_number, event_type, amount)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`, event.Date, event.Contract.Symbol, event.Address, event.Tx, event.BlockNumber, event.Type, event.Amount)
+	if err == pgx.ErrNoRows {
+		return nil
+	}
 	if err != nil {
 		return err
 	}
@@ -49,7 +52,7 @@ func (s *EventStorage) Store(event *blwatcher.Event) error {
 func (s *EventStorage) GetLastEventBlock() (uint64, error) {
 	var blockNumber uint64
 	err := s.conn.QueryRow(context.Background(), `
-		SELECT block_number FROM events ORDER BY block_number DESC LIMIT 1
+		SELECT block_number FROM events ORDER BY date DESC LIMIT 1
 	`).Scan(&blockNumber)
 	if err == pgx.ErrNoRows {
 		return 0, nil
@@ -57,7 +60,7 @@ func (s *EventStorage) GetLastEventBlock() (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return blockNumber, nil
+	return blockNumber - 1, nil // hehe
 }
 
 func (s *EventStorage) GetLatestEvents(limit uint64) ([]*blwatcher.Event, error) {
@@ -65,7 +68,7 @@ func (s *EventStorage) GetLatestEvents(limit uint64) ([]*blwatcher.Event, error)
 		limit = 100000 // Whatever, I don't care
 	}
 	rows, err := s.conn.Query(context.Background(), `
-		SELECT date, contract, address, tx_hash, block_number, event_type, amount FROM events ORDER BY block_number DESC LIMIT $1
+		SELECT date, contract, address, tx_hash, block_number, event_type, amount FROM events ORDER BY date DESC LIMIT $1
 	`, limit)
 	if err == pgx.ErrNoRows {
 		return []*blwatcher.Event{}, nil
