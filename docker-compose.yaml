@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:latest
+    environment:
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=postgres
+    - POSTGRES_DB=postgres
+    volumes:
+    - bl-db-data:/var/lib/postgresql/data/
+  migration:
+    build: .
+    command: /app/migrate
+    env_file:
+    - ./.env
+    depends_on:
+    - db
+    restart: no
+  web:
+    build: .
+    command: /app/migrate && /app/web
+    env_file:
+      - ./.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    restart: on-failure
+  watcher:
+    build: .
+    command: /app/watcher
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+    restart: on-failure
+
+volumes:
+  bl-db-data:
