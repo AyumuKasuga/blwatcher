@@ -20,7 +20,7 @@ services:
     - ./.env
     depends_on:
     - db
-    restart: "no"
+    restart: on-failure
   web:
     build: .
     command: /app/web
