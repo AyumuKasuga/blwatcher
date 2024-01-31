@@ -48,7 +48,8 @@ func main() {
 	})
 
 	http.HandleFunc("/address/", func(w http.ResponseWriter, r *http.Request) {
-		address := r.URL.Path[len("/address/"):]
+		address := r.URL.Path[len("/address/") : 9+42]
+		fmt.Println(address)
 		if len(address) != 42 {
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
@@ -87,7 +88,7 @@ func main() {
 				Link:        &feeds.Link{Href: fmt.Sprintf("https://bl.dzen.ws/address/%s", e.Address)},
 				Description: fmt.Sprintf("%s %s %s %s", e.Type, e.Address, e.Contract.Symbol, e.Date),
 				Created:     e.Date,
-				Id:          fmt.Sprintf("https://bl.dzen.ws/address/%s", e.Address),
+				Id:          fmt.Sprintf("https://bl.dzen.ws/address/%s#%s", e.Address, e.Tx),
 			})
 		}
 
