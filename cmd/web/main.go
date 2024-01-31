@@ -62,9 +62,9 @@ func main() {
 		// Assuming 'events' is populated with your data
 		for _, e := range events {
 			feed.Items = append(feed.Items, &feeds.Item{
-				Title:       fmt.Sprintf("%s %s %s", e.Type, e.Address, e.Date),
+				Title:       fmt.Sprintf("%s %s %s %s", e.Type, e.Address, e.Contract.Symbol, e.Date),
 				Link:        &feeds.Link{Href: fmt.Sprintf("https://etherscan.io/tx/%s", e.Tx)},
-				Description: fmt.Sprintf("%s %s %s", e.Type, e.Address, e.Date),
+				Description: fmt.Sprintf("%s %s %s %s", e.Type, e.Address, e.Contract.Symbol, e.Date),
 				Created:     e.Date,
 				Id:          e.Tx,
 			})
