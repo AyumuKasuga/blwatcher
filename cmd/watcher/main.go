@@ -1,11 +1,12 @@
 package main
 
 import (
-	"blwatcher"
-	"blwatcher/internal"
 	"context"
 	"os"
 	"sync"
+
+	"blwatcher"
+	"blwatcher/internal"
 )
 
 func main() {

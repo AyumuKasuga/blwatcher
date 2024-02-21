@@ -1,20 +1,23 @@
 package main
 
 import (
-	"blwatcher"
-	"blwatcher/internal"
 	"context"
 	"fmt"
-	"github.com/gorilla/feeds"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/gorilla/feeds"
+
+	"blwatcher"
+	"blwatcher/internal"
 )
 
 func main() {
 	ctx := context.Background()
 	connString := os.Getenv("DATABASE_URL")
+
 	if connString == "" {
 		connString = "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
 	}

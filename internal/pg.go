@@ -3,9 +3,10 @@ package internal
 import (
 	"blwatcher"
 	"context"
+	"log"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"log"
 )
 
 type EventStorage struct {
