@@ -1,4 +1,4 @@
-# Blacklist Watcher (POC)
+# Blacklist Watcher (EXPERIMENTAL)
 
 Monitors ERC20 Blacklist related events in Ethereum blockchain.
 
