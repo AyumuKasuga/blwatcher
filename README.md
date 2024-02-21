@@ -1,5 +1,7 @@
-# Blacklist Watcher (PoC)
+# Blacklist Watcher (POC)
 
 Monitors ERC20 Blacklist related events in Ethereum blockchain.
 
-## [Live](https://bl.dzen.ws/)
+⚠️ This is just proof of concept.
+
+live version [bl.dzen.ws](https://bl.dzen.ws/)
