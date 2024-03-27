@@ -9,9 +9,19 @@
 </head>
 <body>
 <div class="container py-3">
-    <h2>Blacklist events of ERC20 contracts (USDT,USDC) in Ethereum network</h2>
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <a href="/rss" class="btn btn-primary">RSS Feed</a>
+    <h2>
+        {{if .Short}}Recent{{else}}All{{end}}
+        blacklist events of ERC20 contracts (USDT,USDC) in Ethereum network
+    </h2>
+    <div class="d-flex flex-row mb-3">
+        {{if not .Short}}
+        <div class="p-2">
+            <a href="/" class="btn btn-primary"> 🏠 </a>
+        </div>
+        {{end}}
+        <div class="p-2">
+            <a href="/rss" class="btn btn-primary">RSS Feed</a>
+        </div>
     </div>
     <div class="table-responsive">
         <table class="table table-striped table-hover">
@@ -25,13 +35,20 @@
             </tr>
             </thead>
             <tbody>
-            {{range .}}
+            {{range .Events}}
             <tr>
                 <td>{{.Date}}</td>
                 <td>{{.Contract.Symbol}}</td>
                 <td>{{.Type}}</td>
                 <td><a href="/address/{{.Address}}">{{.Address}}</a></td>
                 <td><a target="_blank" href="https://etherscan.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a></td>
+            </tr>
+            {{end}}
+            {{if .Short}}
+            <tr>
+                <td colspan="5" class="text-center">
+                    <a href="/all" class="btn btn-primary">View All Events </a>
+                </td>
             </tr>
             {{end}}
             </tbody>

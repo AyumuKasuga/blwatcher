@@ -40,14 +40,37 @@ func main() {
 		Events  []*blwatcher.Event
 	}
 
+	type indexTmplData = struct {
+		Events []*blwatcher.Event
+		Short  bool
+	}
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		events, err := eventStorage.GetLatestEvents(100)
+		if err != nil {
+			log.Printf("Error getting events: %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		data := indexTmplData{
+			Events: events,
+			Short:  true,
+		}
+		table_tmpl.Execute(w, data)
+	})
+
+	http.HandleFunc("/all", func(w http.ResponseWriter, r *http.Request) {
 		events, err := eventStorage.GetLatestEvents(0)
 		if err != nil {
 			log.Printf("Error getting events: %v", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-		table_tmpl.Execute(w, events)
+		data := indexTmplData{
+			Events: events,
+			Short:  false,
+		}
+		table_tmpl.Execute(w, data)
 	})
 
 	http.HandleFunc("/address/", func(w http.ResponseWriter, r *http.Request) {

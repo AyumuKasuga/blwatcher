@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine3.19 as builder
+FROM golang:1.22-alpine as builder
 
 WORKDIR /build
 COPY . .
@@ -7,7 +7,7 @@ RUN go build -o migrate ./cmd/migrate/main.go \
     && go build -o watcher ./cmd/watcher/main.go \
     && go build -o web ./cmd/web/main.go
 
-FROM alpine:3.19
+FROM alpine:latest
 
 RUN apk add --no-cache ca-certificates
 
