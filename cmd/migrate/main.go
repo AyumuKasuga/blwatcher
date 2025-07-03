@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-var createTablesSQL = `
+const createTablesSQL = `
 CREATE TABLE IF NOT EXISTS events (
 	id SERIAL PRIMARY KEY,
 	date TIMESTAMP NOT NULL,
