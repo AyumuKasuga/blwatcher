@@ -30,7 +30,9 @@
             {{range .Events}}
             <tr>
                 <td>{{.Date}}</td>
-                <td>{{.Contract.Symbol}}</td>
+                <td>
+                    {{if eq .Contract.Symbol "USDT"}}🟢{{else if eq .Contract.Symbol "USDC"}}🔵{{end}} {{.Contract.Symbol}}
+                </td>
                 <td>
                     {{if eq .Type "SubmitBlacklist"}}✉️ {{else if eq .Type "AddBlacklist"}}🚫 {{else if eq .Type "RemoveBlacklist"}}✅ {{else if eq .Type "DestroyBlackFunds"}}🔥 {{end}}{{.Type}}
                 </td>
