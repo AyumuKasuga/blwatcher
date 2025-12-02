@@ -22,6 +22,7 @@ func main() {
 	contracts := []blwatcher.Contract{
 		blwatcher.AddressContractMap[blwatcher.USDTContractAddress],
 		blwatcher.AddressContractMap[blwatcher.USDCContractAddress],
+		blwatcher.AddressContractMap[blwatcher.USDTMultiSigContractAddress],
 	}
 	eventStorage := internal.NewEventStorage(
 		ctx,

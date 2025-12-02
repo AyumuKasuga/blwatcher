@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -23,6 +24,7 @@ var removedBlackListSig = crypto.Keccak256Hash([]byte("RemovedBlackList(address)
 var destroyedBlackFundsSig = crypto.Keccak256Hash([]byte("DestroyedBlackFunds(address,uint256)")) // USDT
 var blacklistedSig = crypto.Keccak256Hash([]byte("Blacklisted(address)"))                         // USDC
 var unblacklistedSig = crypto.Keccak256Hash([]byte("UnBlacklisted(address)"))                     // USDC
+var submissionSig = crypto.Keccak256Hash([]byte("Submission(uint256)"))                           // USDT multisig
 
 type Topic struct {
 	eventType blwatcher.EventType
@@ -35,6 +37,7 @@ var topics = map[common.Hash]Topic{
 	destroyedBlackFundsSig: {blwatcher.DestroyBlackFundsEvent, "DestroyedBlackFunds"},
 	blacklistedSig:         {blwatcher.AddBlacklistEvent, "Blacklisted"},
 	unblacklistedSig:       {blwatcher.RemoveBlacklistEvent, "UnBlacklisted"},
+	submissionSig:          {blwatcher.SubmitBlacklistEvent, "Submission"},
 }
 
 type Watcher struct {
@@ -82,7 +85,7 @@ func (w *Watcher) Watch(ctx context.Context) error {
 	query := ethereum.FilterQuery{
 		Addresses: w.contractAddresses,
 		Topics: [][]common.Hash{
-			{addedBlackListSig, removedBlackListSig, destroyedBlackFundsSig, blacklistedSig, unblacklistedSig},
+			{addedBlackListSig, removedBlackListSig, destroyedBlackFundsSig, blacklistedSig, unblacklistedSig, submissionSig},
 		},
 		FromBlock: big.NewInt(int64(fromBlock)),
 	}
@@ -151,6 +154,9 @@ func (w *Watcher) processLogs(ctx context.Context, client *ethclient.Client, vLo
 	blockDate := time.Unix(int64(block.Time()), 0)
 
 	topic := vLog.Topics[0]
+	if topic == submissionSig {
+		return w.handleSubmission(ctx, client, vLog, blockDate)
+	}
 
 	contractAddress := strings.ToLower(vLog.Address.String())
 	contract, found := blwatcher.AddressContractMap[contractAddress]
@@ -189,4 +195,99 @@ func (w *Watcher) processLogs(ctx context.Context, client *ethclient.Client, vLo
 		Amount:      amount,
 	}
 	return nil
+}
+
+func (w *Watcher) handleSubmission(ctx context.Context, client *ethclient.Client, vLog types.Log, blockDate time.Time) error {
+	if len(vLog.Topics) < 2 {
+		return fmt.Errorf("submission log missing transaction id")
+	}
+
+	txID := vLog.Topics[1].Big()
+	destination, data, err := w.getMultisigTransaction(ctx, client, vLog.Address, txID, vLog.BlockNumber)
+	if err != nil {
+		return err
+	}
+
+	if strings.ToLower(destination.Hex()) != blwatcher.USDTContractAddress {
+		return nil
+	}
+
+	target, ok, err := w.decodeUSDTBlacklistData(data)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return nil
+	}
+
+	contract := blwatcher.AddressContractMap[blwatcher.USDTContractAddress]
+	w.eventChan <- &blwatcher.Event{
+		Date:        blockDate,
+		Contract:    contract,
+		Address:     target.String(),
+		Tx:          vLog.TxHash.String(),
+		BlockNumber: vLog.BlockNumber,
+		Type:        blwatcher.SubmitBlacklistEvent,
+	}
+
+	return nil
+}
+
+func (w *Watcher) getMultisigTransaction(ctx context.Context, client *ethclient.Client, contract common.Address, txID *big.Int, blockNumber uint64) (common.Address, []byte, error) {
+	input, err := w.contractAbiMap[contract].Pack("transactions", txID)
+	if err != nil {
+		return common.Address{}, nil, err
+	}
+
+	blockNum := new(big.Int).SetUint64(blockNumber)
+	result, err := client.CallContract(ctx, ethereum.CallMsg{To: &contract, Data: input}, blockNum)
+	if err != nil {
+		return common.Address{}, nil, err
+	}
+
+	output, err := w.contractAbiMap[contract].Unpack("transactions", result)
+	if err != nil {
+		return common.Address{}, nil, err
+	}
+	if len(output) < 3 {
+		return common.Address{}, nil, fmt.Errorf("unexpected transactions output length")
+	}
+
+	destination := output[0].(common.Address)
+	dataBytes, ok := output[2].([]byte)
+	if !ok {
+		return common.Address{}, nil, fmt.Errorf("unexpected data type for multisig tx data")
+	}
+
+	return destination, dataBytes, nil
+}
+
+func (w *Watcher) decodeUSDTBlacklistData(data []byte) (common.Address, bool, error) {
+	if len(data) < 4 {
+		return common.Address{}, false, nil
+	}
+
+	usdtABI := w.contractAbiMap[common.HexToAddress(blwatcher.USDTContractAddress)]
+	method, ok := usdtABI.Methods["addBlackList"]
+	if !ok {
+		return common.Address{}, false, fmt.Errorf("addBlackList method missing in ABI")
+	}
+	if !bytes.Equal(data[:4], method.ID) {
+		return common.Address{}, false, nil
+	}
+
+	args, err := method.Inputs.Unpack(data[4:])
+	if err != nil {
+		return common.Address{}, false, err
+	}
+	if len(args) == 0 {
+		return common.Address{}, false, nil
+	}
+
+	address, ok := args[0].(common.Address)
+	if !ok {
+		return common.Address{}, false, fmt.Errorf("unexpected type for addBlackList argument")
+	}
+
+	return address, true, nil
 }
