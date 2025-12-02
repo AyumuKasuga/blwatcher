@@ -10,9 +10,15 @@
 <body>
 <div class="container py-3">
     <h2>
-        {{if .Short}}Recent{{else}}All{{end}}
+        ㊙️ {{if .Short}}Recent{{else}}All{{end}}
         blacklist events of ERC20 contracts (USDT,USDC) in Ethereum network
     </h2>
+    <p class="text-muted mb-3 small">
+        <strong>SubmitBlacklist</strong> - multisig submission to blacklist, USDT<br>
+        <strong>AddBlacklist</strong> - address added<br>
+        <strong>RemoveBlacklist</strong> - address cleared<br>
+        <strong>DestroyBlackFunds</strong> - blacklisted funds burned
+    </p>
     <div class="d-flex flex-row mb-3">
         {{if not .Short}}
         <div class="p-2">
