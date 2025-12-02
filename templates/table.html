@@ -14,10 +14,10 @@
         blacklist events of ERC20 contracts (USDT,USDC) in Ethereum network
     </h2>
     <p class="text-muted mb-3 small">
-        <strong>SubmitBlacklist</strong> - multisig submission to blacklist, USDT<br>
-        <strong>AddBlacklist</strong> - address added<br>
-        <strong>RemoveBlacklist</strong> - address cleared<br>
-        <strong>DestroyBlackFunds</strong> - blacklisted funds burned
+        ✉️ <strong>SubmitBlacklist</strong> - multisig submission to blacklist, USDT<br>
+        🚫 <strong>AddBlacklist</strong> - address added<br>
+        ✅ <strong>RemoveBlacklist</strong> - address cleared<br>
+        🔥 <strong>DestroyBlackFunds</strong> - blacklisted funds burned
     </p>
     <div class="d-flex flex-row mb-3">
         {{if not .Short}}
@@ -45,7 +45,9 @@
             <tr>
                 <td>{{.Date}}</td>
                 <td>{{.Contract.Symbol}}</td>
-                <td>{{.Type}}</td>
+                <td>
+                    {{if eq .Type "SubmitBlacklist"}}✉️ {{else if eq .Type "AddBlacklist"}}🚫 {{else if eq .Type "RemoveBlacklist"}}✅ {{else if eq .Type "DestroyBlackFunds"}}🔥 {{end}}{{.Type}}
+                </td>
                 <td><a href="/address/{{.Address}}">{{.Address}}</a></td>
                 <td><a target="_blank" href="https://etherscan.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a></td>
             </tr>

@@ -31,7 +31,9 @@
             <tr>
                 <td>{{.Date}}</td>
                 <td>{{.Contract.Symbol}}</td>
-                <td>{{.Type}}</td>
+                <td>
+                    {{if eq .Type "SubmitBlacklist"}}✉️ {{else if eq .Type "AddBlacklist"}}🚫 {{else if eq .Type "RemoveBlacklist"}}✅ {{else if eq .Type "DestroyBlackFunds"}}🔥 {{end}}{{.Type}}
+                </td>
                 <td>{{.Address}}</td>
                 <td><a target="_blank" href="https://etherscan.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a></td>
             </tr>
