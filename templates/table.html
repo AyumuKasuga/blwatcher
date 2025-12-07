@@ -28,6 +28,7 @@
                 <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=" class="btn btn-outline-secondary {{if or (eq .Filter "") (eq .Filter "all")}}active{{end}}">All</a>
                 <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=ethereum" class="btn btn-outline-secondary {{if eq .Filter "ethereum"}}active{{end}}">Ethereum</a>
                 <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=arbitrum" class="btn btn-outline-secondary {{if eq .Filter "arbitrum"}}active{{end}}">Arbitrum</a>
+                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=base" class="btn btn-outline-secondary {{if eq .Filter "base"}}active{{end}}">Base</a>
                 <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=tron" class="btn btn-outline-secondary {{if eq .Filter "tron"}}active{{end}}">Tron</a>
             </div>
         </div>
@@ -48,7 +49,7 @@
             {{range .Events}}
             <tr>
                 <td>{{.Date}}</td>
-                <td>{{if eq .Blockchain "tron"}}[T] Tron{{else if eq .Blockchain "arbitrum"}}[A] Arbitrum{{else}}[E] Ethereum{{end}}</td>
+                <td>{{if eq .Blockchain "tron"}}[T] Tron{{else if eq .Blockchain "arbitrum"}}[A] Arbitrum{{else if eq .Blockchain "base"}}[B] Base{{else}}[E] Ethereum{{end}}</td>
                 <td>
                     {{if eq .Contract.Symbol "USDT"}}🟢 {{else if eq .Contract.Symbol "USDC"}}🔵 {{else if eq .Contract.Symbol "USDT-MS"}}🟢✉️ {{end}}{{.Contract.Symbol}}
                 </td>
@@ -61,6 +62,8 @@
                     <a target="_blank" href="https://tronscan.org/#/transaction/{{.Tx}}">{{slice .Tx 0 10}}</a>
                     {{else if eq .Blockchain "arbitrum"}}
                     <a target="_blank" href="https://arbiscan.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
+                    {{else if eq .Blockchain "base"}}
+                    <a target="_blank" href="https://basescan.org/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
                     {{else}}
                     <a target="_blank" href="https://etherscan.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
                     {{end}}

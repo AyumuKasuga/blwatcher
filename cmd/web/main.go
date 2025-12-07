@@ -59,6 +59,9 @@ func main() {
 		case "arbitrum":
 			b := blwatcher.BlockchainArbitrum
 			return &b
+		case "base":
+			b := blwatcher.BlockchainBase
+			return &b
 		default:
 			return nil
 		}
