@@ -66,15 +66,6 @@ type tronEventsResponse struct {
 	} `json:"meta"`
 }
 
-type tronConstantResult struct {
-	ConstantResult []string `json:"constant_result"`
-	Result         struct {
-		Result  bool   `json:"result"`
-		Code    string `json:"code"`
-		Message string `json:"message"`
-	} `json:"result"`
-}
-
 func NewTronWatcher(
 	contracts []blwatcher.Contract,
 	apiURL string,
@@ -354,7 +345,9 @@ func (w *tronWatcher) post(ctx context.Context, path string, payload interface{}
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	if resp.StatusCode >= http.StatusBadRequest {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("[T] tron api %s returned status %d: %s", path, resp.StatusCode, strings.TrimSpace(string(body)))
@@ -377,7 +370,9 @@ func (w *tronWatcher) get(ctx context.Context, path string, result interface{}) 
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	if resp.StatusCode >= http.StatusBadRequest {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("[T] tron api %s returned status %d: %s", path, resp.StatusCode, strings.TrimSpace(string(body)))

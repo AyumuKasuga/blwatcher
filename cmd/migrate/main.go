@@ -39,16 +39,29 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf(createTablesSQL)
-	defer conn.Close(context.Background())
+	fmt.Print(createTablesSQL)
+	defer func() {
+		if err := conn.Close(context.Background()); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to close connection: %v\n", err)
+		}
+	}()
 	tx, err := conn.Begin(ctx)
 	if err != nil {
 		panic(err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil && err != pgx.ErrTxClosed {
+			fmt.Fprintf(os.Stderr, "Failed to rollback: %v\n", err)
+		}
+	}()
 	_, err = tx.Exec(
 		ctx,
 		createTablesSQL,
 	)
-	tx.Commit(ctx)
+	if err != nil {
+		panic(err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		panic(err)
+	}
 }

@@ -32,7 +32,11 @@ func main() {
 	server := http.Server{
 		Addr: ":8080",
 	}
-	defer server.Shutdown(ctx)
+	defer func() {
+		if err := server.Shutdown(ctx); err != nil {
+			log.Printf("Server shutdown error: %v", err)
+		}
+	}()
 
 	table_tmpl := template.Must(template.ParseFiles("templates/table.html"))
 	address_tmpl := template.Must(template.ParseFiles("templates/address.html"))
@@ -86,7 +90,10 @@ func main() {
 			Short:  true,
 			Filter: strings.ToLower(filter),
 		}
-		table_tmpl.Execute(w, data)
+		if err := table_tmpl.Execute(w, data); err != nil {
+			log.Printf("Error rendering table: %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 	})
 
 	http.HandleFunc("/all", func(w http.ResponseWriter, r *http.Request) {
@@ -102,7 +109,10 @@ func main() {
 			Short:  false,
 			Filter: strings.ToLower(filter),
 		}
-		table_tmpl.Execute(w, data)
+		if err := table_tmpl.Execute(w, data); err != nil {
+			log.Printf("Error rendering table: %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 	})
 
 	http.HandleFunc("/address/", func(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +140,10 @@ func main() {
 			Address: normalizedAddress,
 			Events:  events,
 		}
-		address_tmpl.Execute(w, addressTmplData)
+		if err := address_tmpl.Execute(w, addressTmplData); err != nil {
+			log.Printf("Error rendering address page: %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 	})
 
 	http.HandleFunc("/rss", func(w http.ResponseWriter, r *http.Request) {
@@ -141,6 +154,11 @@ func main() {
 		}
 
 		events, err := eventStorage.GetLatestEvents(100)
+		if err != nil {
+			log.Printf("Error getting events for RSS: %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
 
 		for _, e := range events {
 			feed.Items = append(feed.Items, &feeds.Item{
@@ -159,7 +177,9 @@ func main() {
 		}
 
 		w.Header().Set("Content-Type", "application/rss+xml")
-		w.Write([]byte(rss))
+		if _, err := w.Write([]byte(rss)); err != nil {
+			log.Printf("Error writing RSS response: %v", err)
+		}
 	})
 
 	log.Printf("Starting server on %s", server.Addr)

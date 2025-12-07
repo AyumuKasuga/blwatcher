@@ -36,14 +36,20 @@ func (s *EventStorage) Store(event *blwatcher.Event) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.conn.Exec(context.Background(), `
+	defer func() {
+		_ = tx.Rollback(context.Background())
+	}()
+
+	_, err = tx.Exec(context.Background(), `
 		INSERT INTO events (blockchain, date, contract, address, tx_hash, block_number, event_type, amount)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT DO NOTHING
 	`, event.Blockchain, event.Date, event.Contract.Symbol, event.Address, event.Tx, event.BlockNumber, event.Type, event.Amount)
 	if err != nil {
 		return err
 	}
-	err = tx.Commit(context.Background())
+	if err := tx.Commit(context.Background()); err != nil {
+		return err
+	}
 	log.Printf("[%s] Stored event\t[%s]\t|%s - %s|\t(%s)\n", strings.ToUpper(string(event.Blockchain)), event.Date, event.Contract.Symbol, event.Type, event.Address)
 	return nil
 }
