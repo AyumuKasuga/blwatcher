@@ -4,6 +4,7 @@ import (
 	"blwatcher"
 	"context"
 	"log"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -36,25 +37,26 @@ func (s *EventStorage) Store(event *blwatcher.Event) error {
 		return err
 	}
 	_, err = s.conn.Exec(context.Background(), `
-		INSERT INTO events (date, contract, address, tx_hash, block_number, event_type, amount)
-		VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING
-	`, event.Date, event.Contract.Symbol, event.Address, event.Tx, event.BlockNumber, event.Type, event.Amount)
+		INSERT INTO events (blockchain, date, contract, address, tx_hash, block_number, event_type, amount)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT DO NOTHING
+	`, event.Blockchain, event.Date, event.Contract.Symbol, event.Address, event.Tx, event.BlockNumber, event.Type, event.Amount)
 	if err != nil {
 		return err
 	}
 	err = tx.Commit(context.Background())
-	log.Printf("Stored event\t[%s]\t|%s - %s|\t(%s)\n", event.Date, event.Contract.Symbol, event.Type, event.Address)
+	log.Printf("[%s] Stored event\t[%s]\t|%s - %s|\t(%s)\n", strings.ToUpper(string(event.Blockchain)[0:1]), event.Date, event.Contract.Symbol, event.Type, event.Address)
 	return nil
 }
 
-func (s *EventStorage) GetLastEventBlock() (uint64, error) {
+func (s *EventStorage) GetLastEventBlock(blockchain blwatcher.Blockchain) (uint64, error) {
 	var blockNumber uint64
 	err := s.conn.QueryRow(context.Background(), `
 		SELECT block_number
 		FROM events
-		ORDER BY date DESC
+		WHERE blockchain = $1
+		ORDER BY block_number DESC
 		LIMIT 1
-	`).Scan(&blockNumber)
+	`, blockchain).Scan(&blockNumber)
 	if err == pgx.ErrNoRows {
 		return 0, nil
 	}
@@ -65,36 +67,12 @@ func (s *EventStorage) GetLastEventBlock() (uint64, error) {
 }
 
 func (s *EventStorage) GetLatestEvents(limit uint64) ([]*blwatcher.Event, error) {
-	if limit == 0 {
-		limit = 100000 // Whatever, I don't care
-	}
-	rows, err := s.conn.Query(context.Background(), `
-		SELECT date, contract, address, tx_hash, block_number, event_type, amount
-		FROM events
-		ORDER BY date
-		DESC LIMIT $1
-	`, limit)
-	if err == pgx.ErrNoRows {
-		return []*blwatcher.Event{}, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	entries := []*blwatcher.Event{}
-	for rows.Next() {
-		var e blwatcher.Event
-		if err := rows.Scan(&e.Date, &e.Contract.Symbol, &e.Address, &e.Tx, &e.BlockNumber, &e.Type, &e.Amount); err != nil {
-			return nil, err
-		}
-		entries = append(entries, &e)
-	}
-	return entries, nil
+	return s.GetLatestEventsFiltered(limit, nil)
 }
 
 func (s *EventStorage) GetEventsByAddress(address string) ([]*blwatcher.Event, error) {
 	rows, err := s.conn.Query(context.Background(), `
-		SELECT date, contract, address, tx_hash, block_number, event_type, amount
+		SELECT blockchain, date, contract, address, tx_hash, block_number, event_type, amount
 		FROM events
 		WHERE address = $1
 		ORDER BY date DESC
@@ -109,9 +87,45 @@ func (s *EventStorage) GetEventsByAddress(address string) ([]*blwatcher.Event, e
 	entries := []*blwatcher.Event{}
 	for rows.Next() {
 		var e blwatcher.Event
-		if err := rows.Scan(&e.Date, &e.Contract.Symbol, &e.Address, &e.Tx, &e.BlockNumber, &e.Type, &e.Amount); err != nil {
+		if err := rows.Scan(&e.Blockchain, &e.Date, &e.Contract.Symbol, &e.Address, &e.Tx, &e.BlockNumber, &e.Type, &e.Amount); err != nil {
 			return nil, err
 		}
+		e.Contract.Blockchain = e.Blockchain
+		entries = append(entries, &e)
+	}
+	return entries, nil
+}
+
+func (s *EventStorage) GetLatestEventsFiltered(limit uint64, blockchain *blwatcher.Blockchain) ([]*blwatcher.Event, error) {
+	if limit == 0 {
+		limit = 100000 // Whatever, I don't care
+	}
+	args := []interface{}{limit}
+	query := `
+		SELECT blockchain, date, contract, address, tx_hash, block_number, event_type, amount
+		FROM events
+	`
+	if blockchain != nil {
+		query += "WHERE blockchain = $2\n"
+		args = append(args, *blockchain)
+	}
+	query += "ORDER BY date DESC\nLIMIT $1"
+
+	rows, err := s.conn.Query(context.Background(), query, args...)
+	if err == pgx.ErrNoRows {
+		return []*blwatcher.Event{}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	entries := []*blwatcher.Event{}
+	for rows.Next() {
+		var e blwatcher.Event
+		if err := rows.Scan(&e.Blockchain, &e.Date, &e.Contract.Symbol, &e.Address, &e.Tx, &e.BlockNumber, &e.Type, &e.Amount); err != nil {
+			return nil, err
+		}
+		e.Contract.Blockchain = e.Blockchain
 		entries = append(entries, &e)
 	}
 	return entries, nil

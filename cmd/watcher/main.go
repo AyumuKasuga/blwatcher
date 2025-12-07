@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
+	"strconv"
 	"sync"
 
 	"blwatcher"
@@ -29,18 +31,45 @@ func main() {
 		connString,
 	)
 	eventChan := make(chan *blwatcher.Event)
-	parser := internal.NewWatcher(contracts, ethNodeURL, eventChan, eventStorage)
+	watchers := []blwatcher.Watcher{
+		internal.NewWatcher(contracts, ethNodeURL, eventChan, eventStorage),
+	}
+
+	if tronNodeURL := os.Getenv("TRON_NODE_URL"); tronNodeURL != "" {
+		tronUSDT := blwatcher.TronUSDTContract
+		if override := os.Getenv("TRON_USDT_CONTRACT"); override != "" {
+			tronUSDT.Address = override
+		}
+		tronContracts := []blwatcher.Contract{tronUSDT}
+
+		var tronStartBlock uint64
+		if startStr := os.Getenv("TRON_START_BLOCK"); startStr != "" {
+			if parsed, err := strconv.ParseUint(startStr, 10, 64); err == nil {
+				tronStartBlock = parsed
+			} else {
+				log.Printf("Invalid TRON_START_BLOCK value %q: %v", startStr, err)
+			}
+		}
+
+		tronAPIKey := os.Getenv("TRON_API_KEY")
+
+		watchers = append(watchers, internal.NewTronWatcher(tronContracts, tronNodeURL, tronAPIKey, tronStartBlock, eventChan, eventStorage))
+	} else {
+		log.Printf("TRON_NODE_URL not set, Tron watcher disabled")
+	}
 
 	wg := sync.WaitGroup{}
 
-	wg.Add(1)
-	go func(ctx context.Context) {
-		defer wg.Done()
-		err := parser.Watch(ctx)
-		if err != nil {
-			panic(err)
-		}
-	}(ctx)
+	for _, watcher := range watchers {
+		wg.Add(1)
+		go func(ctx context.Context, watcher blwatcher.Watcher) {
+			defer wg.Done()
+			err := watcher.Watch(ctx)
+			if err != nil {
+				panic(err)
+			}
+		}(ctx, watcher)
+	}
 
 	for {
 		select {

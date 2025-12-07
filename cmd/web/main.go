@@ -6,7 +6,9 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/gorilla/feeds"
 
@@ -43,10 +45,25 @@ func main() {
 	type indexTmplData = struct {
 		Events []*blwatcher.Event
 		Short  bool
+		Filter string
+	}
+
+	parseFilter := func(value string) *blwatcher.Blockchain {
+		switch strings.ToLower(value) {
+		case "tron":
+			b := blwatcher.BlockchainTron
+			return &b
+		case "ethereum":
+			b := blwatcher.BlockchainEthereum
+			return &b
+		default:
+			return nil
+		}
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		events, err := eventStorage.GetLatestEvents(100)
+		filter := r.URL.Query().Get("chain")
+		events, err := eventStorage.GetLatestEventsFiltered(100, parseFilter(filter))
 		if err != nil {
 			log.Printf("Error getting events: %v", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -55,12 +72,14 @@ func main() {
 		data := indexTmplData{
 			Events: events,
 			Short:  true,
+			Filter: strings.ToLower(filter),
 		}
 		table_tmpl.Execute(w, data)
 	})
 
 	http.HandleFunc("/all", func(w http.ResponseWriter, r *http.Request) {
-		events, err := eventStorage.GetLatestEvents(0)
+		filter := r.URL.Query().Get("chain")
+		events, err := eventStorage.GetLatestEventsFiltered(0, parseFilter(filter))
 		if err != nil {
 			log.Printf("Error getting events: %v", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -69,17 +88,24 @@ func main() {
 		data := indexTmplData{
 			Events: events,
 			Short:  false,
+			Filter: strings.ToLower(filter),
 		}
 		table_tmpl.Execute(w, data)
 	})
 
 	http.HandleFunc("/address/", func(w http.ResponseWriter, r *http.Request) {
-		address := r.URL.Path[len("/address/") : 9+42]
-		if len(address) != 42 {
+		rawAddress := strings.TrimPrefix(r.URL.Path, "/address/")
+		address, err := url.PathUnescape(strings.TrimSuffix(rawAddress, "/"))
+		if err != nil || address == "" {
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
-		events, err := eventStorage.GetEventsByAddress(address)
+		normalizedAddress := address
+		if strings.HasPrefix(address, "0x") {
+			normalizedAddress = strings.ToLower(address)
+		}
+
+		events, err := eventStorage.GetEventsByAddress(normalizedAddress)
 		if err != nil {
 			log.Printf("Error getting events: %v", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -92,7 +118,7 @@ func main() {
 		}
 
 		addressTmplData := addressTmplData{
-			Address: address,
+			Address: normalizedAddress,
 			Events:  events,
 		}
 		address_tmpl.Execute(w, addressTmplData)
@@ -100,18 +126,18 @@ func main() {
 
 	http.HandleFunc("/rss", func(w http.ResponseWriter, r *http.Request) {
 		feed := &feeds.Feed{
-			Title:       "Latest blacklist events of ERC20 contracts (USDT,USDC) in Ethereum network",
+			Title:       "Blacklist events of USDT/USDC on Ethereum and Tron",
 			Link:        &feeds.Link{Href: "https://bl.dzen.ws/rss", Rel: "self"},
-			Description: "Latest blacklist events of ERC20 contracts (USDT,USDC) in Ethereum network",
+			Description: "Latest blacklist events of USDT/USDC on Ethereum and Tron networks",
 		}
 
 		events, err := eventStorage.GetLatestEvents(100)
 
 		for _, e := range events {
 			feed.Items = append(feed.Items, &feeds.Item{
-				Title:       fmt.Sprintf("%s %s %s %s", e.Type, e.Address, e.Contract.Symbol, e.Date),
+				Title:       fmt.Sprintf("[%s] %s %s %s %s", e.Blockchain, e.Type, e.Address, e.Contract.Symbol, e.Date),
 				Link:        &feeds.Link{Href: fmt.Sprintf("https://bl.dzen.ws/address/%s", e.Address)},
-				Description: fmt.Sprintf("%s %s %s %s", e.Type, e.Address, e.Contract.Symbol, e.Date),
+				Description: fmt.Sprintf("[%s] %s %s %s %s", e.Blockchain, e.Type, e.Address, e.Contract.Symbol, e.Date),
 				Created:     e.Date,
 				Id:          fmt.Sprintf("https://bl.dzen.ws/address/%s#%s", e.Address, e.Tx),
 			})

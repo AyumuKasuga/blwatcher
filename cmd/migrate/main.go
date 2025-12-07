@@ -12,6 +12,7 @@ import (
 const createTablesSQL = `
 CREATE TABLE IF NOT EXISTS events (
 	id SERIAL PRIMARY KEY,
+	blockchain TEXT NOT NULL,
 	date TIMESTAMP NOT NULL,
 	contract TEXT NOT NULL,
 	address TEXT NOT NULL,
@@ -22,8 +23,9 @@ CREATE TABLE IF NOT EXISTS events (
 );
 
 CREATE INDEX IF NOT EXISTS events_date_idx ON events (date DESC);
-CREATE UNIQUE INDEX IF NOT EXISTS events_tx_hash_idx ON events (tx_hash);
-CREATE INDEX IF NOT EXISTS events_address_idx ON events (address);
+CREATE UNIQUE INDEX IF NOT EXISTS events_chain_tx_hash_idx ON events (blockchain, tx_hash);
+CREATE INDEX IF NOT EXISTS events_address_idx ON events (address, blockchain);
+CREATE INDEX IF NOT EXISTS events_blockchain_idx ON events (blockchain);
 `
 
 func main() {

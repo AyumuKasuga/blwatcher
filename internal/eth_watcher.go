@@ -44,6 +44,7 @@ type Watcher struct {
 	contractAddresses []common.Address
 	ethNodeURL        string
 	contractAbiMap    map[common.Address]abi.ABI
+	contractMap       map[string]blwatcher.Contract
 	eventChan         chan *blwatcher.Event
 	eventStorage      blwatcher.EventStorage
 }
@@ -56,6 +57,7 @@ func NewWatcher(
 ) blwatcher.Watcher {
 	contractAddresses := make([]common.Address, len(contracts))
 	contractAbiMap := make(map[common.Address]abi.ABI, len(contracts))
+	contractMap := make(map[string]blwatcher.Contract, len(contracts))
 	for i, contract := range contracts {
 		contractAddresses[i] = common.HexToAddress(contract.Address)
 		contractAbi, err := abi.JSON(strings.NewReader(contract.AbiJSON))
@@ -63,11 +65,13 @@ func NewWatcher(
 			panic(err)
 		}
 		contractAbiMap[contractAddresses[i]] = contractAbi
+		contractMap[strings.ToLower(contract.Address)] = contract
 	}
 	return &Watcher{
 		contractAddresses: contractAddresses,
 		ethNodeURL:        ethNodeURL,
 		contractAbiMap:    contractAbiMap,
+		contractMap:       contractMap,
 		eventChan:         eventChan,
 		eventStorage:      eventStorage,
 	}
@@ -78,7 +82,7 @@ func (w *Watcher) Watch(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	fromBlock, err := w.eventStorage.GetLastEventBlock()
+	fromBlock, err := w.eventStorage.GetLastEventBlock(blwatcher.BlockchainEthereum)
 	if err != nil {
 		return err
 	}
@@ -105,7 +109,7 @@ func (w *Watcher) Watch(ctx context.Context) error {
 		}
 	}(ctx, client, fromBlock)
 
-	log.Printf("Start watching from block %d\n", fromBlock)
+	log.Printf("[E] Start watching from block %d\n", fromBlock)
 
 	for {
 		select {
@@ -114,7 +118,7 @@ func (w *Watcher) Watch(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case vLog := <-logChan:
-			log.Printf("Received log: %v\n", vLog)
+			log.Printf("[E] Received log: %v\n", vLog)
 			err := w.processLogs(ctx, client, vLog)
 			if err != nil {
 				return err
@@ -134,7 +138,7 @@ func (w *Watcher) processPastEvents(ctx context.Context, client *ethclient.Clien
 			return err
 		}
 	}
-	log.Printf("Processed %d past events\n", len(logs))
+	log.Printf("[E] Processed %d past events\n", len(logs))
 	return nil
 }
 
@@ -159,7 +163,7 @@ func (w *Watcher) processLogs(ctx context.Context, client *ethclient.Client, vLo
 	}
 
 	contractAddress := strings.ToLower(vLog.Address.String())
-	contract, found := blwatcher.AddressContractMap[contractAddress]
+	contract, found := w.contractMap[contractAddress]
 	if !found {
 		// Should not be possible
 		return fmt.Errorf("unknown contract address %s", contractAddress)
@@ -186,6 +190,7 @@ func (w *Watcher) processLogs(ctx context.Context, client *ethclient.Client, vLo
 		amount = event[1].(*big.Int).Int64()
 	}
 	w.eventChan <- &blwatcher.Event{
+		Blockchain:  blwatcher.BlockchainEthereum,
 		Date:        blockDate,
 		Contract:    contract,
 		Address:     address.String(),
@@ -220,8 +225,9 @@ func (w *Watcher) handleSubmission(ctx context.Context, client *ethclient.Client
 		return nil
 	}
 
-	contract := blwatcher.AddressContractMap[blwatcher.USDTContractAddress]
+	contract := w.contractMap[strings.ToLower(blwatcher.USDTContractAddress)]
 	w.eventChan <- &blwatcher.Event{
+		Blockchain:  blwatcher.BlockchainEthereum,
 		Date:        blockDate,
 		Contract:    contract,
 		Address:     target.String(),

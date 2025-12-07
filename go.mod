@@ -6,12 +6,12 @@ require (
 	github.com/ethereum/go-ethereum v1.16.7
 	github.com/gorilla/feeds v1.2.0
 	github.com/jackc/pgx/v5 v5.7.6
+	github.com/mr-tron/base58 v1.2.0
 )
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20251119083800-2aa1d4cc79d7 // indirect
-	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/bits-and-blooms/bitset v1.24.4 // indirect
 	github.com/consensys/gnark-crypto v0.19.2 // indirect
 	github.com/crate-crypto/go-eth-kzg v1.4.0 // indirect
