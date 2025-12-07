@@ -32,6 +32,23 @@
             max-width: 100%;
             min-width: 260px;
         }
+        .chain-filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .chain-filter-group .btn {
+            display: inline-flex;
+            align-items: center;
+        }
+        .chain-label {
+            margin-left: 4px;
+        }
+        @media (max-width: 576px) {
+            .chain-label {
+                display: none;
+            }
+        }
     </style>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="549d4319-0699-4789-973b-83c11a06796c"></script>
 </head>
@@ -51,14 +68,14 @@
             <a href="/rss" class="btn btn-primary">RSS Feed</a>
         </div>
         <div class="p-2">
-            <div class="btn-group" role="group" aria-label="Filter chain">
+            <div class="chain-filter-group" role="group" aria-label="Filter chain">
                 <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=" class="btn btn-outline-secondary {{if or (eq .Filter "") (eq .Filter "all")}}active{{end}}">All</a>
-                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=ethereum" class="btn btn-outline-secondary {{if eq .Filter "ethereum"}}active{{end}}"><span class="chain-icon chain-eth">E</span>Ethereum</a>
-                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=arbitrum" class="btn btn-outline-secondary {{if eq .Filter "arbitrum"}}active{{end}}"><span class="chain-icon chain-arb">A</span>Arbitrum</a>
-                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=base" class="btn btn-outline-secondary {{if eq .Filter "base"}}active{{end}}"><span class="chain-icon chain-base">B</span>Base</a>
-                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=optimism" class="btn btn-outline-secondary {{if eq .Filter "optimism"}}active{{end}}"><span class="chain-icon chain-op">O</span>Optimism</a>
-                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=avalanche" class="btn btn-outline-secondary {{if eq .Filter "avalanche"}}active{{end}}"><span class="chain-icon chain-avax">AV</span>Avalanche</a>
-                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=tron" class="btn btn-outline-secondary {{if eq .Filter "tron"}}active{{end}}"><span class="chain-icon chain-tron">T</span>Tron</a>
+                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=ethereum" class="btn btn-outline-secondary {{if eq .Filter "ethereum"}}active{{end}}"><span class="chain-icon chain-eth">E</span><span class="chain-label">Ethereum</span></a>
+                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=arbitrum" class="btn btn-outline-secondary {{if eq .Filter "arbitrum"}}active{{end}}"><span class="chain-icon chain-arb">A</span><span class="chain-label">Arbitrum</span></a>
+                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=base" class="btn btn-outline-secondary {{if eq .Filter "base"}}active{{end}}"><span class="chain-icon chain-base">B</span><span class="chain-label">Base</span></a>
+                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=optimism" class="btn btn-outline-secondary {{if eq .Filter "optimism"}}active{{end}}"><span class="chain-icon chain-op">O</span><span class="chain-label">Optimism</span></a>
+                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=avalanche" class="btn btn-outline-secondary {{if eq .Filter "avalanche"}}active{{end}}"><span class="chain-icon chain-avax">AV</span><span class="chain-label">Avalanche</span></a>
+                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=tron" class="btn btn-outline-secondary {{if eq .Filter "tron"}}active{{end}}"><span class="chain-icon chain-tron">T</span><span class="chain-label">Tron</span></a>
             </div>
         </div>
     </div>
