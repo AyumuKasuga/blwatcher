@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"blwatcher"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -118,11 +119,20 @@ func NewOptimismWatcher(
 	return newEVMWatcher(blwatcher.BlockchainOptimism, contracts, rpcURL, eventChan, eventStorage)
 }
 
+func NewAvalancheWatcher(
+	contracts []blwatcher.Contract,
+	rpcURL string,
+	eventChan chan *blwatcher.Event,
+	eventStorage blwatcher.EventStorage,
+) blwatcher.Watcher {
+	return newEVMWatcher(blwatcher.BlockchainAvalanche, contracts, rpcURL, eventChan, eventStorage)
+}
+
 func (w *evmWatcher) prefix() string {
 	if len(w.blockchain) == 0 {
 		return "[?]"
 	}
-	return "[" + strings.ToUpper(string(w.blockchain)[0:1]) + "]"
+	return "[" + strings.ToUpper(string(w.blockchain)) + "]"
 }
 
 func (w *evmWatcher) Watch(ctx context.Context) error {
