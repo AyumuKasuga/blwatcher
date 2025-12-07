@@ -18,6 +18,7 @@ func main() {
 	}
 	arbitrumNodeURL := os.Getenv("ARBITRUM_NODE_URL")
 	baseNodeURL := os.Getenv("BASE_NODE_URL")
+	optimismNodeURL := os.Getenv("OPTIMISM_NODE_URL")
 	connString := os.Getenv("DATABASE_URL")
 	if connString == "" {
 		connString = "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
@@ -53,6 +54,15 @@ func main() {
 		watchers = append(watchers, internal.NewBaseWatcher(baseContracts, baseNodeURL, eventChan, eventStorage))
 	} else {
 		log.Printf("BASE_NODE_URL not set, Base watcher disabled")
+	}
+
+	if optimismNodeURL != "" {
+		optimismContracts := []blwatcher.Contract{
+			blwatcher.AddressContractMap[blwatcher.OptimismUSDCContractAddress],
+		}
+		watchers = append(watchers, internal.NewOptimismWatcher(optimismContracts, optimismNodeURL, eventChan, eventStorage))
+	} else {
+		log.Printf("OPTIMISM_NODE_URL not set, Optimism watcher disabled")
 	}
 
 	if tronNodeURL := os.Getenv("TRON_NODE_URL"); tronNodeURL != "" {

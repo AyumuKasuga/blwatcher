@@ -109,6 +109,15 @@ func NewBaseWatcher(
 	return newEVMWatcher(blwatcher.BlockchainBase, contracts, rpcURL, eventChan, eventStorage)
 }
 
+func NewOptimismWatcher(
+	contracts []blwatcher.Contract,
+	rpcURL string,
+	eventChan chan *blwatcher.Event,
+	eventStorage blwatcher.EventStorage,
+) blwatcher.Watcher {
+	return newEVMWatcher(blwatcher.BlockchainOptimism, contracts, rpcURL, eventChan, eventStorage)
+}
+
 func (w *evmWatcher) prefix() string {
 	if len(w.blockchain) == 0 {
 		return "[?]"

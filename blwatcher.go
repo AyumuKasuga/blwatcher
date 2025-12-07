@@ -12,6 +12,7 @@ const (
 	BlockchainTron     Blockchain = "tron"
 	BlockchainArbitrum Blockchain = "arbitrum"
 	BlockchainBase     Blockchain = "base"
+	BlockchainOptimism Blockchain = "optimism"
 )
 
 const USDTContractAddress = "0xdac17f958d2ee523a2206206994597c13d831ec7"
@@ -21,6 +22,7 @@ const TronUSDTContractAddressHex = "41a614f803b6fd780986a42c78ec9c7f77e6ded13c"
 const TronUSDTContractAddressBase58 = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
 const ArbitrumUSDCContractAddress = "0xaf88d065e77c8cc2239327c5edb3a432268e5831"
 const BaseUSDCContractAddress = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+const OptimismUSDCContractAddress = "0x0b2c639c533813f4aa9d7837caf62653d097ff85"
 
 type Contract struct {
 	Address    string
@@ -62,6 +64,12 @@ func init() {
 		AbiJSON:    AddressContractMap[USDCContractAddress].AbiJSON,
 		Symbol:     "USDC",
 		Blockchain: BlockchainBase,
+	}
+	AddressContractMap[OptimismUSDCContractAddress] = Contract{
+		Address:    OptimismUSDCContractAddress,
+		AbiJSON:    AddressContractMap[USDCContractAddress].AbiJSON,
+		Symbol:     "USDC",
+		Blockchain: BlockchainOptimism,
 	}
 }
 

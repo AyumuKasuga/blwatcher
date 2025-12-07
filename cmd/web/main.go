@@ -62,6 +62,9 @@ func main() {
 		case "base":
 			b := blwatcher.BlockchainBase
 			return &b
+		case "optimism":
+			b := blwatcher.BlockchainOptimism
+			return &b
 		default:
 			return nil
 		}

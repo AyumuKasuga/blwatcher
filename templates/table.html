@@ -12,7 +12,7 @@
 <div class="container py-3">
     <h2>
         ㊙️ {{if .Short}}Recent{{else}}All{{end}}
-        blacklist events of USDT/USDC in Ethereum, Arbitrum &amp; Tron networks
+        blacklist events of USDT/USDC in Ethereum, Arbitrum, Base, Optimism &amp; Tron networks
     </h2>
     <div class="d-flex flex-row mb-3">
         {{if not .Short}}
@@ -29,6 +29,7 @@
                 <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=ethereum" class="btn btn-outline-secondary {{if eq .Filter "ethereum"}}active{{end}}">Ethereum</a>
                 <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=arbitrum" class="btn btn-outline-secondary {{if eq .Filter "arbitrum"}}active{{end}}">Arbitrum</a>
                 <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=base" class="btn btn-outline-secondary {{if eq .Filter "base"}}active{{end}}">Base</a>
+                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=optimism" class="btn btn-outline-secondary {{if eq .Filter "optimism"}}active{{end}}">Optimism</a>
                 <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=tron" class="btn btn-outline-secondary {{if eq .Filter "tron"}}active{{end}}">Tron</a>
             </div>
         </div>
@@ -49,7 +50,7 @@
             {{range .Events}}
             <tr>
                 <td>{{.Date}}</td>
-                <td>{{if eq .Blockchain "tron"}}[T] Tron{{else if eq .Blockchain "arbitrum"}}[A] Arbitrum{{else if eq .Blockchain "base"}}[B] Base{{else}}[E] Ethereum{{end}}</td>
+                <td>{{if eq .Blockchain "tron"}}[T] Tron{{else if eq .Blockchain "arbitrum"}}[A] Arbitrum{{else if eq .Blockchain "base"}}[B] Base{{else if eq .Blockchain "optimism"}}[O] Optimism{{else}}[E] Ethereum{{end}}</td>
                 <td>
                     {{if eq .Contract.Symbol "USDT"}}🟢 {{else if eq .Contract.Symbol "USDC"}}🔵 {{else if eq .Contract.Symbol "USDT-MS"}}🟢✉️ {{end}}{{.Contract.Symbol}}
                 </td>
@@ -64,6 +65,8 @@
                     <a target="_blank" href="https://arbiscan.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
                     {{else if eq .Blockchain "base"}}
                     <a target="_blank" href="https://basescan.org/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
+                    {{else if eq .Blockchain "optimism"}}
+                    <a target="_blank" href="https://optimistic.etherscan.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
                     {{else}}
                     <a target="_blank" href="https://etherscan.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
                     {{end}}
