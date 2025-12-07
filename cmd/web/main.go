@@ -104,9 +104,6 @@ func main() {
 			return
 		}
 		normalizedAddress := address
-		if strings.HasPrefix(address, "0x") {
-			normalizedAddress = strings.ToLower(address)
-		}
 
 		events, err := eventStorage.GetEventsByAddress(normalizedAddress)
 		if err != nil {
