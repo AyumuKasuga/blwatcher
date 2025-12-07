@@ -53,6 +53,9 @@ func main() {
 		case "tron":
 			b := blwatcher.BlockchainTron
 			return &b
+		case "polkadot":
+			b := blwatcher.BlockchainPolkadot
+			return &b
 		case "ethereum":
 			b := blwatcher.BlockchainEthereum
 			return &b
@@ -126,9 +129,9 @@ func main() {
 
 	http.HandleFunc("/rss", func(w http.ResponseWriter, r *http.Request) {
 		feed := &feeds.Feed{
-			Title:       "Blacklist events of USDT/USDC on Ethereum and Tron",
+			Title:       "Blacklist events of USDT/USDC on Ethereum, Tron, and Polkadot Asset Hub",
 			Link:        &feeds.Link{Href: "https://bl.dzen.ws/rss", Rel: "self"},
-			Description: "Latest blacklist events of USDT/USDC on Ethereum and Tron networks",
+			Description: "Latest blacklist events of USDT/USDC on Ethereum, Tron, and Polkadot Asset Hub networks",
 		}
 
 		events, err := eventStorage.GetLatestEvents(100)
