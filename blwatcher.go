@@ -10,6 +10,7 @@ type Blockchain string
 const (
 	BlockchainEthereum Blockchain = "ethereum"
 	BlockchainTron     Blockchain = "tron"
+	BlockchainArbitrum Blockchain = "arbitrum"
 )
 
 const USDTContractAddress = "0xdac17f958d2ee523a2206206994597c13d831ec7"
@@ -17,6 +18,7 @@ const USDCContractAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
 const USDTMultiSigContractAddress = "0xc6cde7c39eb2f0f0095f41570af89efc2c1ea828"
 const TronUSDTContractAddressHex = "41a614f803b6fd780986a42c78ec9c7f77e6ded13c"
 const TronUSDTContractAddressBase58 = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+const ArbitrumUSDCContractAddress = "0xaf88d065e77c8cc2239327c5edb3a432268e5831"
 
 type Contract struct {
 	Address    string
@@ -46,13 +48,21 @@ var AddressContractMap = map[string]Contract{
 	},
 }
 
+func init() {
+	AddressContractMap[ArbitrumUSDCContractAddress] = Contract{
+		Address:    ArbitrumUSDCContractAddress,
+		AbiJSON:    AddressContractMap[USDCContractAddress].AbiJSON,
+		Symbol:     "USDC",
+		Blockchain: BlockchainArbitrum,
+	}
+}
+
 var TronUSDTContract = Contract{
 	Address:    TronUSDTContractAddressHex,
 	AbiJSON:    AddressContractMap[USDTContractAddress].AbiJSON,
 	Symbol:     "USDT",
 	Blockchain: BlockchainTron,
 }
-
 
 type EventType string
 

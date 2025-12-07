@@ -9,14 +9,13 @@ import (
 	"strings"
 	"time"
 
+	"blwatcher"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-
-	"blwatcher"
 )
 
 var addedBlackListSig = crypto.Keccak256Hash([]byte("AddedBlackList(address)"))                   // USDT
@@ -40,18 +39,20 @@ var topics = map[common.Hash]Topic{
 	submissionSig:          {blwatcher.SubmitBlacklistEvent, "Submission"},
 }
 
-type Watcher struct {
+type evmWatcher struct {
+	blockchain        blwatcher.Blockchain
 	contractAddresses []common.Address
-	ethNodeURL        string
+	nodeURL           string
 	contractAbiMap    map[common.Address]abi.ABI
 	contractMap       map[string]blwatcher.Contract
 	eventChan         chan *blwatcher.Event
 	eventStorage      blwatcher.EventStorage
 }
 
-func NewWatcher(
+func newEVMWatcher(
+	blockchain blwatcher.Blockchain,
 	contracts []blwatcher.Contract,
-	ethNodeURL string,
+	rpcURL string,
 	eventChan chan *blwatcher.Event,
 	eventStorage blwatcher.EventStorage,
 ) blwatcher.Watcher {
@@ -59,6 +60,9 @@ func NewWatcher(
 	contractAbiMap := make(map[common.Address]abi.ABI, len(contracts))
 	contractMap := make(map[string]blwatcher.Contract, len(contracts))
 	for i, contract := range contracts {
+		if contract.Blockchain == "" {
+			contract.Blockchain = blockchain
+		}
 		contractAddresses[i] = common.HexToAddress(contract.Address)
 		contractAbi, err := abi.JSON(strings.NewReader(contract.AbiJSON))
 		if err != nil {
@@ -67,9 +71,10 @@ func NewWatcher(
 		contractAbiMap[contractAddresses[i]] = contractAbi
 		contractMap[strings.ToLower(contract.Address)] = contract
 	}
-	return &Watcher{
+	return &evmWatcher{
+		blockchain:        blockchain,
 		contractAddresses: contractAddresses,
-		ethNodeURL:        ethNodeURL,
+		nodeURL:           rpcURL,
 		contractAbiMap:    contractAbiMap,
 		contractMap:       contractMap,
 		eventChan:         eventChan,
@@ -77,12 +82,37 @@ func NewWatcher(
 	}
 }
 
-func (w *Watcher) Watch(ctx context.Context) error {
-	client, err := ethclient.Dial(w.ethNodeURL)
+func NewWatcher(
+	contracts []blwatcher.Contract,
+	ethNodeURL string,
+	eventChan chan *blwatcher.Event,
+	eventStorage blwatcher.EventStorage,
+) blwatcher.Watcher {
+	return newEVMWatcher(blwatcher.BlockchainEthereum, contracts, ethNodeURL, eventChan, eventStorage)
+}
+
+func NewArbitrumWatcher(
+	contracts []blwatcher.Contract,
+	rpcURL string,
+	eventChan chan *blwatcher.Event,
+	eventStorage blwatcher.EventStorage,
+) blwatcher.Watcher {
+	return newEVMWatcher(blwatcher.BlockchainArbitrum, contracts, rpcURL, eventChan, eventStorage)
+}
+
+func (w *evmWatcher) prefix() string {
+	if len(w.blockchain) == 0 {
+		return "[?]"
+	}
+	return "[" + strings.ToUpper(string(w.blockchain)[0:1]) + "]"
+}
+
+func (w *evmWatcher) Watch(ctx context.Context) error {
+	client, err := ethclient.Dial(w.nodeURL)
 	if err != nil {
 		return err
 	}
-	fromBlock, err := w.eventStorage.GetLastEventBlock(blwatcher.BlockchainEthereum)
+	fromBlock, err := w.eventStorage.GetLastEventBlock(w.blockchain)
 	if err != nil {
 		return err
 	}
@@ -109,7 +139,7 @@ func (w *Watcher) Watch(ctx context.Context) error {
 		}
 	}(ctx, client, fromBlock)
 
-	log.Printf("[E] Start watching from block %d\n", fromBlock)
+	log.Printf("%s Start watching from block %d\n", w.prefix(), fromBlock)
 
 	for {
 		select {
@@ -118,7 +148,7 @@ func (w *Watcher) Watch(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case vLog := <-logChan:
-			log.Printf("[E] Received log: %v\n", vLog)
+			log.Printf("%s Received log: %v\n", w.prefix(), vLog)
 			err := w.processLogs(ctx, client, vLog)
 			if err != nil {
 				return err
@@ -127,7 +157,7 @@ func (w *Watcher) Watch(ctx context.Context) error {
 	}
 }
 
-func (w *Watcher) processPastEvents(ctx context.Context, client *ethclient.Client, query ethereum.FilterQuery) error {
+func (w *evmWatcher) processPastEvents(ctx context.Context, client *ethclient.Client, query ethereum.FilterQuery) error {
 	logs, err := client.FilterLogs(ctx, query)
 	if err != nil {
 		return err
@@ -138,11 +168,11 @@ func (w *Watcher) processPastEvents(ctx context.Context, client *ethclient.Clien
 			return err
 		}
 	}
-	log.Printf("[E] Processed %d past events\n", len(logs))
+	log.Printf("%s Processed %d past events\n", w.prefix(), len(logs))
 	return nil
 }
 
-func (w *Watcher) processLogs(ctx context.Context, client *ethclient.Client, vLog types.Log) error {
+func (w *evmWatcher) processLogs(ctx context.Context, client *ethclient.Client, vLog types.Log) error {
 	if len(vLog.Topics) == 0 {
 		return nil
 	}
@@ -151,11 +181,11 @@ func (w *Watcher) processLogs(ctx context.Context, client *ethclient.Client, vLo
 		return nil
 	}
 
-	block, err := client.BlockByNumber(ctx, big.NewInt(int64(vLog.BlockNumber)))
+	header, err := client.HeaderByNumber(ctx, big.NewInt(int64(vLog.BlockNumber)))
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to fetch block header for %d: %w", vLog.BlockNumber, err)
 	}
-	blockDate := time.Unix(int64(block.Time()), 0)
+	blockDate := time.Unix(int64(header.Time), 0)
 
 	topic := vLog.Topics[0]
 	if topic == submissionSig {
@@ -190,7 +220,7 @@ func (w *Watcher) processLogs(ctx context.Context, client *ethclient.Client, vLo
 		amount = event[1].(*big.Int).Int64()
 	}
 	w.eventChan <- &blwatcher.Event{
-		Blockchain:  blwatcher.BlockchainEthereum,
+		Blockchain:  w.blockchain,
 		Date:        blockDate,
 		Contract:    contract,
 		Address:     address.String(),
@@ -202,7 +232,11 @@ func (w *Watcher) processLogs(ctx context.Context, client *ethclient.Client, vLo
 	return nil
 }
 
-func (w *Watcher) handleSubmission(ctx context.Context, client *ethclient.Client, vLog types.Log, blockDate time.Time) error {
+func (w *evmWatcher) handleSubmission(ctx context.Context, client *ethclient.Client, vLog types.Log, blockDate time.Time) error {
+	if w.blockchain != blwatcher.BlockchainEthereum {
+		return nil
+	}
+
 	if len(vLog.Topics) < 2 {
 		return fmt.Errorf("submission log missing transaction id")
 	}
@@ -227,7 +261,7 @@ func (w *Watcher) handleSubmission(ctx context.Context, client *ethclient.Client
 
 	contract := w.contractMap[strings.ToLower(blwatcher.USDTContractAddress)]
 	w.eventChan <- &blwatcher.Event{
-		Blockchain:  blwatcher.BlockchainEthereum,
+		Blockchain:  w.blockchain,
 		Date:        blockDate,
 		Contract:    contract,
 		Address:     target.String(),
@@ -239,7 +273,7 @@ func (w *Watcher) handleSubmission(ctx context.Context, client *ethclient.Client
 	return nil
 }
 
-func (w *Watcher) getMultisigTransaction(ctx context.Context, client *ethclient.Client, contract common.Address, txID *big.Int, blockNumber uint64) (common.Address, []byte, error) {
+func (w *evmWatcher) getMultisigTransaction(ctx context.Context, client *ethclient.Client, contract common.Address, txID *big.Int, blockNumber uint64) (common.Address, []byte, error) {
 	input, err := w.contractAbiMap[contract].Pack("transactions", txID)
 	if err != nil {
 		return common.Address{}, nil, err
@@ -268,7 +302,7 @@ func (w *Watcher) getMultisigTransaction(ctx context.Context, client *ethclient.
 	return destination, dataBytes, nil
 }
 
-func (w *Watcher) decodeUSDTBlacklistData(data []byte) (common.Address, bool, error) {
+func (w *evmWatcher) decodeUSDTBlacklistData(data []byte) (common.Address, bool, error) {
 	if len(data) < 4 {
 		return common.Address{}, false, nil
 	}
