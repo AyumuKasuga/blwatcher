@@ -6,6 +6,33 @@
     <title>Blacklist events of {{.Address}} on Ethereum, Arbitrum, Base, Optimism, Avalanche &amp; Tron</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .chain-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            margin-right: 6px;
+            line-height: 1;
+        }
+        .chain-eth { background: #627eea; }
+        .chain-arb { background: #28a0f0; }
+        .chain-base { background: #0052ff; }
+        .chain-op { background: #ff0420; }
+        .chain-avax { background: #e84142; }
+        .chain-tron { background: #c2171f; }
+        .donation-card {
+            display: inline-block;
+            width: auto;
+            max-width: 100%;
+            min-width: 260px;
+        }
+    </style>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="549d4319-0699-4789-973b-83c11a06796c"></script>
 </head>
 <body>
@@ -32,7 +59,15 @@
             {{range .Events}}
             <tr>
                 <td>{{.Date}}</td>
-                <td>{{if eq .Blockchain "tron"}}[T] Tron{{else if eq .Blockchain "arbitrum"}}[A] Arbitrum{{else if eq .Blockchain "base"}}[B] Base{{else if eq .Blockchain "optimism"}}[O] Optimism{{else if eq .Blockchain "avalanche"}}[AVAX] Avalanche{{else}}[E] Ethereum{{end}}</td>
+                <td>
+                    {{if eq .Blockchain "tron"}}<span class="chain-icon chain-tron" title="Tron">T</span>
+                    {{else if eq .Blockchain "arbitrum"}}<span class="chain-icon chain-arb" title="Arbitrum">A</span>
+                    {{else if eq .Blockchain "base"}}<span class="chain-icon chain-base" title="Base">B</span>
+                    {{else if eq .Blockchain "optimism"}}<span class="chain-icon chain-op" title="Optimism">O</span>
+                    {{else if eq .Blockchain "avalanche"}}<span class="chain-icon chain-avax" title="Avalanche">AV</span>
+                    {{else}}<span class="chain-icon chain-eth" title="Ethereum">E</span>
+                    {{end}}
+                </td>
                 <td>
                     {{if eq .Contract.Symbol "USDT"}}🟢{{else if eq .Contract.Symbol "USDC"}}🔵{{else if eq .Contract.Symbol "USDT-MS"}}🟢✉️{{end}} {{.Contract.Symbol}}
                 </td>
@@ -60,9 +95,32 @@
             </tbody>
         </table>
     </div>
+    <div class="mb-3 mt-3">
+        <div class="card card-body p-2 donation-card">
+            <div class="small text-muted mb-1">If you found this useful, please consider a donation:</div>
+            <div class="d-flex align-items-center">
+                <code id="donation-address" class="me-2">0x7BC7a3E49E9D98b07e94c0C94d803060DEf9fEc9</code>
+                <button class="btn btn-sm btn-outline-secondary" data-copy-target="donation-address">📋</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Bootstrap 5 Bundle with Popper -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('click', function (e) {
+        const target = e.target;
+        if (target && target.dataset && target.dataset.copyTarget) {
+            const el = document.getElementById(target.dataset.copyTarget);
+            if (!el) return;
+            const text = el.textContent.trim();
+            navigator.clipboard.writeText(text).then(() => {
+                target.textContent = 'Copied!';
+                setTimeout(() => target.textContent = '📋', 1200);
+            });
+        }
+    });
+</script>
 </body>
 </html>
