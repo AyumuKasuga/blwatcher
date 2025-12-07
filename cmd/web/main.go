@@ -148,12 +148,12 @@ func main() {
 
 	http.HandleFunc("/rss", func(w http.ResponseWriter, r *http.Request) {
 		feed := &feeds.Feed{
-			Title:       "Blacklist events of USDT/USDC on Ethereum, Arbitrum and Tron",
+			Title:       "Blacklist events of USDT/USDC across Ethereum, Arbitrum, Base, Optimism, Avalanche & Tron",
 			Link:        &feeds.Link{Href: "https://bl.dzen.ws/rss", Rel: "self"},
-			Description: "Latest blacklist events of USDT/USDC on Ethereum, Arbitrum and Tron networks",
+			Description: "Latest blacklist events of USDT/USDC on Ethereum, Arbitrum, Base, Optimism, Avalanche and Tron networks",
 		}
 
-		events, err := eventStorage.GetLatestEvents(100)
+		events, err := eventStorage.GetLatestEvents(250)
 		if err != nil {
 			log.Printf("Error getting events for RSS: %v", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
