@@ -199,6 +199,11 @@ func main() {
 		}
 	}))
 
+	http.Handle("/healthz", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	}))
+
 	log.Printf("Starting server on %s", server.Addr)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal("Server failed to start:", err)
