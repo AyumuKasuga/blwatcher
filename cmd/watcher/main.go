@@ -18,7 +18,9 @@ func main() {
 	sentryDSN := os.Getenv("SENTRY_DSN")
 	if sentryDSN != "" {
 		err := sentry.Init(sentry.ClientOptions{
-			Dsn: sentryDSN,
+			Dsn:              sentryDSN,
+			EnableLogs:       true,
+			TracesSampleRate: 0.2,
 		})
 		if err != nil {
 			log.Printf("Failed to initialize Sentry: %v", err)
