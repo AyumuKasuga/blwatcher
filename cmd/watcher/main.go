@@ -6,12 +6,28 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 
 	"blwatcher"
 	"blwatcher/internal"
+
+	"github.com/getsentry/sentry-go"
 )
 
 func main() {
+	sentryDSN := os.Getenv("SENTRY_DSN")
+	if sentryDSN != "" {
+		err := sentry.Init(sentry.ClientOptions{
+			Dsn: sentryDSN,
+		})
+		if err != nil {
+			log.Printf("Failed to initialize Sentry: %v", err)
+		} else {
+			defer sentry.Flush(2 * time.Second)
+			defer sentry.Recover()
+		}
+	}
+
 	ethNodeURL := os.Getenv("ETH_NODE_URL")
 	if ethNodeURL == "" {
 		panic("ETH_NODE_URL is not set")
@@ -107,6 +123,10 @@ func main() {
 			defer wg.Done()
 			err := watcher.Watch(ctx)
 			if err != nil {
+				if sentryDSN != "" {
+					sentry.CaptureException(err)
+					sentry.Flush(2 * time.Second)
+				}
 				panic(err)
 			}
 		}(ctx, watcher)

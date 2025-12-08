@@ -19,6 +19,7 @@ live version [bl.dzen.ws](https://bl.dzen.ws/)
 - `BASE_NODE_URL` – Base WebSocket endpoint (USDC)
 - `OPTIMISM_NODE_URL` – Optimism WebSocket endpoint (USDC)
 - `AVALANCHE_NODE_URL` – Avalanche C-Chain WebSocket endpoint (USDT/USDC)
+- `SENTRY_DSN` – optional Sentry DSN for error reporting
 - `TRON_NODE_URL` – Tron HTTP endpoint (TronGrid is HTTPS-only, e.g. `https://api.trongrid.io`)
 - `TRON_API_KEY` – optional Trongrid API key (if your endpoint requires it)
 - `TRON_USDT_CONTRACT` – optional override for the TRC20 USDT contract (hex or base58)
