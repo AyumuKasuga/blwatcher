@@ -27,6 +27,7 @@
         .chain-op { background: #ff0420; }
         .chain-avax { background: #e84142; }
         .chain-poly { background: #8247e5; }
+        .chain-zksync { background: #7d3cff; }
         .chain-tron { background: #c2171f; }
         .donation-card {
             display: inline-block;
@@ -68,6 +69,7 @@
                     {{else if eq .Blockchain "optimism"}}<span class="chain-icon chain-op" title="Optimism">O</span>
                     {{else if eq .Blockchain "avalanche"}}<span class="chain-icon chain-avax" title="Avalanche">AV</span>
                     {{else if eq .Blockchain "polygon"}}<span class="chain-icon chain-poly" title="Polygon">P</span>
+                    {{else if eq .Blockchain "zksync"}}<span class="chain-icon chain-zksync" title="ZkSync">ZK</span>
                     {{else}}<span class="chain-icon chain-eth" title="Ethereum">E</span>
                     {{end}}
                 </td>
@@ -91,6 +93,8 @@
                     <a target="_blank" href="https://snowtrace.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
                     {{else if eq .Blockchain "polygon"}}
                     <a target="_blank" href="https://polygonscan.com/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
+                    {{else if eq .Blockchain "zksync"}}
+                    <a target="_blank" href="https://explorer.zksync.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
                     {{else}}
                     <a target="_blank" href="https://etherscan.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
                     {{end}}

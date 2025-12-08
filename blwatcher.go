@@ -15,6 +15,7 @@ const (
 	BlockchainOptimism  Blockchain = "optimism"
 	BlockchainAvalanche Blockchain = "avalanche"
 	BlockchainPolygon   Blockchain = "polygon"
+	BlockchainZkSync    Blockchain = "zksync"
 )
 
 const USDTContractAddress = "0xdac17f958d2ee523a2206206994597c13d831ec7"
@@ -28,6 +29,7 @@ const OptimismUSDCContractAddress = "0x0b2c639c533813f4aa9d7837caf62653d097ff85"
 const AvalancheUSDTContractAddress = "0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7"
 const AvalancheUSDCContractAddress = "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e"
 const PolygonUSDCContractAddress = "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359"
+const ZkSyncUSDCContractAddress = "0x1d17cbcf0d6d143135ae902365d2e5e2a16538d4"
 
 type Contract struct {
 	Address    string
@@ -93,6 +95,12 @@ func init() {
 		AbiJSON:    AddressContractMap[USDCContractAddress].AbiJSON,
 		Symbol:     "USDC",
 		Blockchain: BlockchainPolygon,
+	}
+	AddressContractMap[ZkSyncUSDCContractAddress] = Contract{
+		Address:    ZkSyncUSDCContractAddress,
+		AbiJSON:    AddressContractMap[USDCContractAddress].AbiJSON,
+		Symbol:     "USDC",
+		Blockchain: BlockchainZkSync,
 	}
 }
 

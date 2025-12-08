@@ -92,6 +92,9 @@ func main() {
 		case "polygon":
 			b := blwatcher.BlockchainPolygon
 			return &b
+		case "zksync":
+			b := blwatcher.BlockchainZkSync
+			return &b
 		default:
 			return nil
 		}
@@ -170,7 +173,7 @@ func main() {
 		feed := &feeds.Feed{
 			Title:       "Blacklist events of USDT/USDC across multiple blockchains",
 			Link:        &feeds.Link{Href: "https://bl.dzen.ws/rss", Rel: "self"},
-			Description: "Latest blacklist events of USDT/USDC on Ethereum, Arbitrum, Base, Optimism, Avalanche, Polygon and Tron networks",
+			Description: "Latest blacklist events of USDT/USDC on Ethereum, Arbitrum, Base, Optimism, Avalanche, Polygon, ZkSync and Tron networks",
 		}
 
 		events, err := eventStorage.GetLatestEvents(250)
