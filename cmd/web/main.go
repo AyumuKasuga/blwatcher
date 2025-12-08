@@ -168,7 +168,7 @@ func main() {
 
 	http.Handle("/rss", sentryMiddleware.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
 		feed := &feeds.Feed{
-			Title:       "Blacklist events of USDT/USDC across Ethereum, Arbitrum, Base, Optimism, Avalanche, Polygon & Tron",
+			Title:       "Blacklist events of USDT/USDC across multiple blockchains",
 			Link:        &feeds.Link{Href: "https://bl.dzen.ws/rss", Rel: "self"},
 			Description: "Latest blacklist events of USDT/USDC on Ethereum, Arbitrum, Base, Optimism, Avalanche, Polygon and Tron networks",
 		}
