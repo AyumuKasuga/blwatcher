@@ -89,6 +89,9 @@ func main() {
 		case "avalanche":
 			b := blwatcher.BlockchainAvalanche
 			return &b
+		case "polygon":
+			b := blwatcher.BlockchainPolygon
+			return &b
 		default:
 			return nil
 		}
@@ -165,9 +168,9 @@ func main() {
 
 	http.Handle("/rss", sentryMiddleware.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
 		feed := &feeds.Feed{
-			Title:       "Blacklist events of USDT/USDC across Ethereum, Arbitrum, Base, Optimism, Avalanche & Tron",
+			Title:       "Blacklist events of USDT/USDC across Ethereum, Arbitrum, Base, Optimism, Avalanche, Polygon & Tron",
 			Link:        &feeds.Link{Href: "https://bl.dzen.ws/rss", Rel: "self"},
-			Description: "Latest blacklist events of USDT/USDC on Ethereum, Arbitrum, Base, Optimism, Avalanche and Tron networks",
+			Description: "Latest blacklist events of USDT/USDC on Ethereum, Arbitrum, Base, Optimism, Avalanche, Polygon and Tron networks",
 		}
 
 		events, err := eventStorage.GetLatestEvents(250)

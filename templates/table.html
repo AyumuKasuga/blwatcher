@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blacklist events of USDT/USDC on Ethereum, Arbitrum &amp; Tron</title>
+    <title>Blacklist events of USDT/USDC on Ethereum, Arbitrum, Base, Optimism, Avalanche, Polygon &amp; Tron</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -25,6 +25,7 @@
         .chain-base { background: #0052ff; }
         .chain-op { background: #ff0420; }
         .chain-avax { background: #e84142; }
+        .chain-poly { background: #8247e5; }
         .chain-tron { background: #c2171f; }
         .donation-card {
             display: inline-block;
@@ -56,7 +57,7 @@
 <div class="container py-3">
     <h2>
         ㊙️ {{if .Short}}Recent{{else}}All{{end}}
-        blacklist events of USDT/USDC in Ethereum, Arbitrum, Base, Optimism, Avalanche &amp; Tron networks
+        blacklist events of USDT/USDC in Ethereum, Arbitrum, Base, Optimism, Avalanche, Polygon &amp; Tron networks
     </h2>
     <div class="d-flex flex-row mb-3">
         {{if not .Short}}
@@ -75,6 +76,7 @@
                 <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=base" class="btn btn-outline-secondary {{if eq .Filter "base"}}active{{end}}"><span class="chain-icon chain-base">B</span><span class="chain-label">Base</span></a>
                 <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=optimism" class="btn btn-outline-secondary {{if eq .Filter "optimism"}}active{{end}}"><span class="chain-icon chain-op">O</span><span class="chain-label">Optimism</span></a>
                 <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=avalanche" class="btn btn-outline-secondary {{if eq .Filter "avalanche"}}active{{end}}"><span class="chain-icon chain-avax">AV</span><span class="chain-label">Avalanche</span></a>
+                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=polygon" class="btn btn-outline-secondary {{if eq .Filter "polygon"}}active{{end}}"><span class="chain-icon chain-poly">P</span><span class="chain-label">Polygon</span></a>
                 <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=tron" class="btn btn-outline-secondary {{if eq .Filter "tron"}}active{{end}}"><span class="chain-icon chain-tron">T</span><span class="chain-label">Tron</span></a>
             </div>
         </div>
@@ -101,6 +103,7 @@
                     {{else if eq .Blockchain "base"}}<span class="chain-icon chain-base" title="Base">B</span>
                     {{else if eq .Blockchain "optimism"}}<span class="chain-icon chain-op" title="Optimism">O</span>
                     {{else if eq .Blockchain "avalanche"}}<span class="chain-icon chain-avax" title="Avalanche">AV</span>
+                    {{else if eq .Blockchain "polygon"}}<span class="chain-icon chain-poly" title="Polygon">P</span>
                     {{else}}<span class="chain-icon chain-eth" title="Ethereum">E</span>
                     {{end}}
                 </td>
@@ -122,6 +125,8 @@
                     <a target="_blank" href="https://optimistic.etherscan.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
                     {{else if eq .Blockchain "avalanche"}}
                     <a target="_blank" href="https://snowtrace.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
+                    {{else if eq .Blockchain "polygon"}}
+                    <a target="_blank" href="https://polygonscan.com/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
                     {{else}}
                     <a target="_blank" href="https://etherscan.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
                     {{end}}

@@ -36,6 +36,7 @@ func main() {
 	baseNodeURL := os.Getenv("BASE_NODE_URL")
 	optimismNodeURL := os.Getenv("OPTIMISM_NODE_URL")
 	avalancheNodeURL := os.Getenv("AVALANCHE_NODE_URL")
+	polygonNodeURL := os.Getenv("POLYGON_NODE_URL")
 	connString := os.Getenv("DATABASE_URL")
 	if connString == "" {
 		connString = "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
@@ -90,6 +91,15 @@ func main() {
 		watchers = append(watchers, internal.NewAvalancheWatcher(avaxContracts, avalancheNodeURL, eventChan, eventStorage))
 	} else {
 		log.Printf("AVALANCHE_NODE_URL not set, Avalanche watcher disabled")
+	}
+
+	if polygonNodeURL != "" {
+		polygonContracts := []blwatcher.Contract{
+			blwatcher.AddressContractMap[blwatcher.PolygonUSDCContractAddress],
+		}
+		watchers = append(watchers, internal.NewPolygonWatcher(polygonContracts, polygonNodeURL, eventChan, eventStorage))
+	} else {
+		log.Printf("POLYGON_NODE_URL not set, Polygon watcher disabled")
 	}
 
 	if tronNodeURL := os.Getenv("TRON_NODE_URL"); tronNodeURL != "" {

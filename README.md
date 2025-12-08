@@ -6,6 +6,7 @@ Monitors blacklist-related events for stablecoin contracts:
 - 🟦 Base: USDC
 - 🔴 Optimism: USDC
 - 🏔️ Avalanche: USDT, USDC
+- 🟪 Polygon (PoS): USDC
 - 🟥 Tron (TRC20): USDT (including multisig submissions when configured)
 
 ⚠️ This is just proof of concept.
@@ -19,6 +20,7 @@ live version [bl.dzen.ws](https://bl.dzen.ws/)
 - `BASE_NODE_URL` – Base WebSocket endpoint (USDC)
 - `OPTIMISM_NODE_URL` – Optimism WebSocket endpoint (USDC)
 - `AVALANCHE_NODE_URL` – Avalanche C-Chain WebSocket endpoint (USDT/USDC)
+- `POLYGON_NODE_URL` – Polygon PoS WebSocket endpoint (USDC)
 - `SENTRY_DSN` – optional Sentry DSN for error reporting
 - `TRON_NODE_URL` – Tron HTTP endpoint (TronGrid is HTTPS-only, e.g. `https://api.trongrid.io`)
 - `TRON_API_KEY` – optional Trongrid API key (if your endpoint requires it)

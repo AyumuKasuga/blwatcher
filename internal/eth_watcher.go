@@ -128,6 +128,15 @@ func NewAvalancheWatcher(
 	return newEVMWatcher(blwatcher.BlockchainAvalanche, contracts, rpcURL, eventChan, eventStorage)
 }
 
+func NewPolygonWatcher(
+	contracts []blwatcher.Contract,
+	rpcURL string,
+	eventChan chan *blwatcher.Event,
+	eventStorage blwatcher.EventStorage,
+) blwatcher.Watcher {
+	return newEVMWatcher(blwatcher.BlockchainPolygon, contracts, rpcURL, eventChan, eventStorage)
+}
+
 func (w *evmWatcher) prefix() string {
 	if len(w.blockchain) == 0 {
 		return "[?]"
