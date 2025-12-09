@@ -136,3 +136,43 @@ func (s *EventStorage) GetLatestEventsFiltered(limit uint64, offset uint64, bloc
 	}
 	return entries, nil
 }
+
+func (s *EventStorage) GetLatestEventID() (int64, error) {
+	var id int64
+	err := s.conn.QueryRow(context.Background(), `
+		SELECT id FROM events ORDER BY id DESC LIMIT 1
+	`).Scan(&id)
+	if err == pgx.ErrNoRows {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+func (s *EventStorage) GetAllAddressesWithLastDate() ([]blwatcher.AddressLastDate, error) {
+	rows, err := s.conn.Query(context.Background(), `
+		SELECT address, MAX(date) AS last_date
+		FROM events
+		GROUP BY address
+		ORDER BY last_date DESC
+	`)
+	if err == pgx.ErrNoRows {
+		return []blwatcher.AddressLastDate{}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entries []blwatcher.AddressLastDate
+	for rows.Next() {
+		var item blwatcher.AddressLastDate
+		if err := rows.Scan(&item.Address, &item.Date); err != nil {
+			return nil, err
+		}
+		entries = append(entries, item)
+	}
+	return entries, nil
+}

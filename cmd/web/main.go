@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"encoding/xml"
+	"sync"
 
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
@@ -95,6 +97,17 @@ func main() {
 		Now      time.Time
 	}
 
+	type urlEntry struct {
+		Loc     string `xml:"loc"`
+		LastMod string `xml:"lastmod,omitempty"`
+	}
+
+	type urlSet struct {
+		XMLName xml.Name   `xml:"urlset"`
+		Xmlns   string     `xml:"xmlns,attr"`
+		Urls    []urlEntry `xml:"url"`
+	}
+
 	parseFilter := func(value string) *blwatcher.Blockchain {
 		switch strings.ToLower(value) {
 		case "tron":
@@ -127,6 +140,25 @@ func main() {
 	}
 
 	const pageSize = 200
+
+	var (
+		sitemapMu    sync.Mutex
+		sitemapBytes []byte
+		sitemapLast  int64
+	)
+
+	getCachedSitemap := func() ([]byte, int64) {
+		sitemapMu.Lock()
+		defer sitemapMu.Unlock()
+		return sitemapBytes, sitemapLast
+	}
+
+	setCachedSitemap := func(data []byte, lastID int64) {
+		sitemapMu.Lock()
+		defer sitemapMu.Unlock()
+		sitemapBytes = data
+		sitemapLast = lastID
+	}
 
 	http.Handle("/", sentryMiddleware.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
 		filter := r.URL.Query().Get("chain")
@@ -226,6 +258,73 @@ func main() {
 		}
 	}))
 
+	http.Handle("/sitemap.xml", sentryMiddleware.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
+		latestID, err := eventStorage.GetLatestEventID()
+		if err != nil {
+			log.Printf("Error getting latest event id: %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		if cached, cachedID := getCachedSitemap(); cachedID == latestID && len(cached) > 0 {
+			w.Header().Set("Content-Type", "application/xml")
+			_, _ = w.Write(cached)
+			return
+		}
+
+		baseURL := "https://bl.dzen.ws"
+
+		urls := []urlEntry{
+			{Loc: baseURL + "/"},
+			{Loc: baseURL + "/?page=1&chain=ethereum"},
+			{Loc: baseURL + "/?page=1&chain=arbitrum"},
+			{Loc: baseURL + "/?page=1&chain=base"},
+			{Loc: baseURL + "/?page=1&chain=optimism"},
+			{Loc: baseURL + "/?page=1&chain=avalanche"},
+			{Loc: baseURL + "/?page=1&chain=polygon"},
+			{Loc: baseURL + "/?page=1&chain=zksync"},
+			{Loc: baseURL + "/?page=1&chain=tron"},
+		}
+
+		addresses, err := eventStorage.GetAllAddressesWithLastDate()
+		if err != nil {
+			log.Printf("Error getting addresses for sitemap: %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		for _, addr := range addresses {
+			urls = append(urls, urlEntry{
+				Loc:     fmt.Sprintf("%s/address/%s", baseURL, addr.Address),
+				LastMod: addr.Date.Format(time.RFC3339),
+			})
+		}
+
+		us := urlSet{
+			Xmlns: "http://www.sitemaps.org/schemas/sitemap/0.9",
+			Urls:  urls,
+		}
+
+		output, err := xml.MarshalIndent(us, "", "  ")
+		if err != nil {
+			log.Printf("Error marshaling sitemap: %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		// Add XML header
+		output = append([]byte(xml.Header), output...)
+
+		setCachedSitemap(output, latestID)
+
+		w.Header().Set("Content-Type", "application/xml")
+		if _, err := w.Write(output); err != nil {
+			log.Printf("Error writing sitemap: %v", err)
+		}
+	}))
+
+	http.Handle("/robots.txt", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		_, _ = w.Write([]byte("User-agent: *\nAllow: /\nSitemap: https://bl.dzen.ws/sitemap.xml\n"))
+	}))
 	http.Handle("/healthz", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))

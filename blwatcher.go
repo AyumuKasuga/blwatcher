@@ -136,7 +136,14 @@ type EventStorage interface {
 	GetLatestEvents(limit uint64) ([]*Event, error)
 	GetLatestEventsFiltered(limit uint64, offset uint64, blockchain *Blockchain) ([]*Event, error)
 	GetEventsByAddress(address string) ([]*Event, error)
+	GetLatestEventID() (int64, error)
+	GetAllAddressesWithLastDate() ([]AddressLastDate, error)
 	Store(event *Event) error
+}
+
+type AddressLastDate struct {
+	Address string
+	Date    time.Time
 }
 
 type Watcher interface {
