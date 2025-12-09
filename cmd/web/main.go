@@ -62,6 +62,18 @@ func main() {
 		"datetime": func(t time.Time) string {
 			return t.Format(time.RFC3339)
 		},
+		"ageBadge": func(now, t time.Time) template.HTML {
+			d := now.Sub(t)
+			switch {
+			case d <= time.Hour:
+				return `<span class="badge bg-danger ms-1">new</span>`
+			case d <= 24*time.Hour:
+				return `<span class="badge bg-warning text-dark ms-1">recent</span>`
+			default:
+				days := int(d.Hours() / 24)
+				return template.HTML(fmt.Sprintf(`<span class="badge bg-secondary ms-1">%d days ago</span>`, days))
+			}
+		},
 	}
 
 	table_tmpl := template.Must(template.New("table.html").Funcs(funcMap).ParseFiles("templates/table.html"))
@@ -80,6 +92,7 @@ func main() {
 		HasNext  bool
 		PrevPage int
 		NextPage int
+		Now      time.Time
 	}
 
 	parseFilter := func(value string) *blwatcher.Blockchain {
@@ -129,6 +142,7 @@ func main() {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
+		now := time.Now().UTC()
 		data := indexTmplData{
 			Events:   events,
 			Filter:   strings.ToLower(filter),
@@ -137,6 +151,7 @@ func main() {
 			HasNext:  len(events) == pageSize,
 			PrevPage: page - 1,
 			NextPage: page + 1,
+			Now:      now,
 		}
 		if err := table_tmpl.Execute(w, data); err != nil {
 			log.Printf("Error rendering table: %v", err)
