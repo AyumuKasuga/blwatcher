@@ -57,8 +57,14 @@ func main() {
 
 	sentryMiddleware := sentryhttp.New(sentryhttp.Options{})
 
-	table_tmpl := template.Must(template.ParseFiles("templates/table.html"))
-	address_tmpl := template.Must(template.ParseFiles("templates/address.html"))
+	funcMap := template.FuncMap{
+		"datetime": func(t time.Time) string {
+			return t.Format(time.RFC3339)
+		},
+	}
+
+	table_tmpl := template.Must(template.New("table.html").Funcs(funcMap).ParseFiles("templates/table.html"))
+	address_tmpl := template.Must(template.New("address.html").Funcs(funcMap).ParseFiles("templates/address.html"))
 
 	type addressTmplData = struct {
 		Address string
