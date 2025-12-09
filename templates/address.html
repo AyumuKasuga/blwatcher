@@ -62,7 +62,7 @@
             <tbody>
             {{range .Events}}
             <tr>
-                <td>{{.Date}}</td>
+                <td><time datetime="{{.Date}}">{{.Date}}</time></td>
                 <td>
                     {{if eq .Blockchain "tron"}}<span class="chain-icon chain-tron" title="Tron">T</span>
                     {{else if eq .Blockchain "arbitrum"}}<span class="chain-icon chain-arb" title="Arbitrum">A</span>
