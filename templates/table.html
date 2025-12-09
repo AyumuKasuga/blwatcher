@@ -111,7 +111,7 @@
             <tbody>
             {{range .Events}}
             <tr>
-                <td><time datetime="{{datetime .Date}}">{{.Date}}</time></td>
+                <td class="text-nowrap"><time datetime="{{datetime .Date}}">{{.Date}}</time>{{ageBadge $.Now .Date}}</td>
                 <td>
                     {{if eq .Blockchain "tron"}}<span class="chain-icon chain-tron" title="Tron">T</span>
                     {{else if eq .Blockchain "arbitrum"}}<span class="chain-icon chain-arb" title="Arbitrum">A</span>
