@@ -73,7 +73,7 @@ func (s *EventStorage) GetLastEventBlock(blockchain blwatcher.Blockchain) (uint6
 }
 
 func (s *EventStorage) GetLatestEvents(limit uint64) ([]*blwatcher.Event, error) {
-	return s.GetLatestEventsFiltered(limit, nil)
+	return s.GetLatestEventsFiltered(limit, 0, nil)
 }
 
 func (s *EventStorage) GetEventsByAddress(address string) ([]*blwatcher.Event, error) {
@@ -102,20 +102,20 @@ func (s *EventStorage) GetEventsByAddress(address string) ([]*blwatcher.Event, e
 	return entries, nil
 }
 
-func (s *EventStorage) GetLatestEventsFiltered(limit uint64, blockchain *blwatcher.Blockchain) ([]*blwatcher.Event, error) {
+func (s *EventStorage) GetLatestEventsFiltered(limit uint64, offset uint64, blockchain *blwatcher.Blockchain) ([]*blwatcher.Event, error) {
 	if limit == 0 {
-		limit = 100000 // Whatever, I don't care
+		limit = 200
 	}
-	args := []interface{}{limit}
+	args := []interface{}{limit, offset}
 	query := `
 		SELECT blockchain, date, contract, address, tx_hash, block_number, event_type, amount
 		FROM events
 	`
 	if blockchain != nil {
-		query += "WHERE blockchain = $2\n"
+		query += "WHERE blockchain = $3\n"
 		args = append(args, *blockchain)
 	}
-	query += "ORDER BY date DESC\nLIMIT $1"
+	query += "ORDER BY date DESC\nLIMIT $1 OFFSET $2"
 
 	rows, err := s.conn.Query(context.Background(), query, args...)
 	if err == pgx.ErrNoRows {

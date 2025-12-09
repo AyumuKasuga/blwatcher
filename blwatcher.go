@@ -134,7 +134,7 @@ type Event struct {
 type EventStorage interface {
 	GetLastEventBlock(blockchain Blockchain) (uint64, error)
 	GetLatestEvents(limit uint64) ([]*Event, error)
-	GetLatestEventsFiltered(limit uint64, blockchain *Blockchain) ([]*Event, error)
+	GetLatestEventsFiltered(limit uint64, offset uint64, blockchain *Blockchain) ([]*Event, error)
 	GetEventsByAddress(address string) ([]*Event, error)
 	Store(event *Event) error
 }

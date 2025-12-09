@@ -57,31 +57,43 @@
 </head>
 <body>
 <div class="container py-3">
-    <h2>
-        ㊙️ {{if .Short}}Recent{{else}}All{{end}}
-        blacklist events of USDT/USDC across multiple blockchains
-    </h2>
-    <div class="d-flex flex-row mb-3">
-        {{if not .Short}}
-        <div class="p-2">
-            <a href="/" class="btn btn-primary"> 🏠 </a>
-        </div>
-        {{end}}
+    <h2>㊙️ All blacklist events of USDT/USDC across multiple blockchains</h2>
+    <div class="d-flex flex-row mb-2">
         <div class="p-2">
             <a href="/rss" class="btn btn-primary">RSS Feed</a>
         </div>
         <div class="p-2">
             <div class="chain-filter-group" role="group" aria-label="Filter chain">
-                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=" class="btn btn-outline-secondary {{if or (eq .Filter "") (eq .Filter "all")}}active{{end}}">All</a>
-                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=ethereum" class="btn btn-outline-secondary {{if eq .Filter "ethereum"}}active{{end}}"><span class="chain-icon chain-eth">E</span><span class="chain-label">Ethereum</span></a>
-                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=arbitrum" class="btn btn-outline-secondary {{if eq .Filter "arbitrum"}}active{{end}}"><span class="chain-icon chain-arb">A</span><span class="chain-label">Arbitrum</span></a>
-                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=base" class="btn btn-outline-secondary {{if eq .Filter "base"}}active{{end}}"><span class="chain-icon chain-base">B</span><span class="chain-label">Base</span></a>
-                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=optimism" class="btn btn-outline-secondary {{if eq .Filter "optimism"}}active{{end}}"><span class="chain-icon chain-op">O</span><span class="chain-label">Optimism</span></a>
-                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=avalanche" class="btn btn-outline-secondary {{if eq .Filter "avalanche"}}active{{end}}"><span class="chain-icon chain-avax">AV</span><span class="chain-label">Avalanche</span></a>
-                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=polygon" class="btn btn-outline-secondary {{if eq .Filter "polygon"}}active{{end}}"><span class="chain-icon chain-poly">P</span><span class="chain-label">Polygon</span></a>
-                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=zksync" class="btn btn-outline-secondary {{if eq .Filter "zksync"}}active{{end}}"><span class="chain-icon chain-zksync">ZK</span><span class="chain-label">ZkSync</span></a>
-                <a href="{{if .Short}}/?{{else}}/all?{{end}}chain=tron" class="btn btn-outline-secondary {{if eq .Filter "tron"}}active{{end}}"><span class="chain-icon chain-tron">T</span><span class="chain-label">Tron</span></a>
+                <a href="/?page=1" class="btn btn-outline-secondary {{if or (eq .Filter "") (eq .Filter "all")}}active{{end}}">All</a>
+                <a href="/?page=1&chain=ethereum" class="btn btn-outline-secondary {{if eq .Filter "ethereum"}}active{{end}}"><span class="chain-icon chain-eth">E</span><span class="chain-label">Ethereum</span></a>
+                <a href="/?page=1&chain=arbitrum" class="btn btn-outline-secondary {{if eq .Filter "arbitrum"}}active{{end}}"><span class="chain-icon chain-arb">A</span><span class="chain-label">Arbitrum</span></a>
+                <a href="/?page=1&chain=base" class="btn btn-outline-secondary {{if eq .Filter "base"}}active{{end}}"><span class="chain-icon chain-base">B</span><span class="chain-label">Base</span></a>
+                <a href="/?page=1&chain=optimism" class="btn btn-outline-secondary {{if eq .Filter "optimism"}}active{{end}}"><span class="chain-icon chain-op">O</span><span class="chain-label">Optimism</span></a>
+                <a href="/?page=1&chain=avalanche" class="btn btn-outline-secondary {{if eq .Filter "avalanche"}}active{{end}}"><span class="chain-icon chain-avax">AV</span><span class="chain-label">Avalanche</span></a>
+                <a href="/?page=1&chain=polygon" class="btn btn-outline-secondary {{if eq .Filter "polygon"}}active{{end}}"><span class="chain-icon chain-poly">P</span><span class="chain-label">Polygon</span></a>
+                <a href="/?page=1&chain=zksync" class="btn btn-outline-secondary {{if eq .Filter "zksync"}}active{{end}}"><span class="chain-icon chain-zksync">ZK</span><span class="chain-label">ZkSync</span></a>
+                <a href="/?page=1&chain=tron" class="btn btn-outline-secondary {{if eq .Filter "tron"}}active{{end}}"><span class="chain-icon chain-tron">T</span><span class="chain-label">Tron</span></a>
             </div>
+        </div>
+    </div>
+    <div class="d-flex justify-content-center align-items-center mb-2">
+        <div class="btn-group" role="group" aria-label="Pagination top">
+            {{if gt .Page 1}}
+            <a class="btn btn-outline-secondary" href="/?page=1{{if .Filter}}&chain={{.Filter}}{{end}}">First</a>
+            {{else}}
+            <button class="btn btn-outline-secondary" disabled>First</button>
+            {{end}}
+            {{if .HasPrev}}
+            <a class="btn btn-outline-secondary" href="/?page={{.PrevPage}}{{if .Filter}}&chain={{.Filter}}{{end}}">Prev</a>
+            {{else}}
+            <button class="btn btn-outline-secondary" disabled>Prev</button>
+            {{end}}
+            <button class="btn btn-outline-secondary" disabled>Page {{.Page}}</button>
+            {{if .HasNext}}
+            <a class="btn btn-outline-secondary" href="/?page={{.NextPage}}{{if .Filter}}&chain={{.Filter}}{{end}}">Next</a>
+            {{else}}
+            <button class="btn btn-outline-secondary" disabled>Next</button>
+            {{end}}
         </div>
     </div>
     <div class="table-responsive">
@@ -139,15 +151,28 @@
                 </td>
             </tr>
             {{end}}
-            {{if .Short}}
-            <tr>
-                <td colspan="6" class="text-center">
-                    <a href="/all" class="btn btn-primary">View All Events </a>
-                </td>
-            </tr>
-            {{end}}
             </tbody>
         </table>
+    </div>
+    <div class="d-flex justify-content-center align-items-center my-2">
+        <div class="btn-group" role="group" aria-label="Pagination bottom">
+            {{if gt .Page 1}}
+            <a class="btn btn-outline-secondary" href="/?page=1{{if .Filter}}&chain={{.Filter}}{{end}}">First</a>
+            {{else}}
+            <button class="btn btn-outline-secondary" disabled>First</button>
+            {{end}}
+            {{if .HasPrev}}
+            <a class="btn btn-outline-secondary" href="/?page={{.PrevPage}}{{if .Filter}}&chain={{.Filter}}{{end}}">Prev</a>
+            {{else}}
+            <button class="btn btn-outline-secondary" disabled>Prev</button>
+            {{end}}
+            <button class="btn btn-outline-secondary" disabled>Page {{.Page}}</button>
+            {{if .HasNext}}
+            <a class="btn btn-outline-secondary" href="/?page={{.NextPage}}{{if .Filter}}&chain={{.Filter}}{{end}}">Next</a>
+            {{else}}
+            <button class="btn btn-outline-secondary" disabled>Next</button>
+            {{end}}
+        </div>
     </div>
     <div class="mb-3 mt-3">
         <div class="card card-body p-2 donation-card">

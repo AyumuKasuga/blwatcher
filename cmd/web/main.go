@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -71,10 +72,14 @@ func main() {
 		Events  []*blwatcher.Event
 	}
 
-	type indexTmplData = struct {
-		Events []*blwatcher.Event
-		Short  bool
-		Filter string
+	type indexTmplData struct {
+		Events   []*blwatcher.Event
+		Filter   string
+		Page     int
+		HasPrev  bool
+		HasNext  bool
+		PrevPage int
+		NextPage int
 	}
 
 	parseFilter := func(value string) *blwatcher.Blockchain {
@@ -108,37 +113,30 @@ func main() {
 		}
 	}
 
+	const pageSize = 200
+
 	http.Handle("/", sentryMiddleware.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
 		filter := r.URL.Query().Get("chain")
-		events, err := eventStorage.GetLatestEventsFiltered(100, parseFilter(filter))
-		if err != nil {
-			log.Printf("Error getting events: %v", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
+		page := 1
+		if p, err := strconv.Atoi(r.URL.Query().Get("page")); err == nil && p > 0 {
+			page = p
 		}
-		data := indexTmplData{
-			Events: events,
-			Short:  true,
-			Filter: strings.ToLower(filter),
-		}
-		if err := table_tmpl.Execute(w, data); err != nil {
-			log.Printf("Error rendering table: %v", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
-	}))
+		offset := uint64((page - 1) * pageSize)
 
-	http.Handle("/all", sentryMiddleware.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
-		filter := r.URL.Query().Get("chain")
-		events, err := eventStorage.GetLatestEventsFiltered(0, parseFilter(filter))
+		events, err := eventStorage.GetLatestEventsFiltered(pageSize, offset, parseFilter(filter))
 		if err != nil {
 			log.Printf("Error getting events: %v", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 		data := indexTmplData{
-			Events: events,
-			Short:  false,
-			Filter: strings.ToLower(filter),
+			Events:   events,
+			Filter:   strings.ToLower(filter),
+			Page:     page,
+			HasPrev:  page > 1,
+			HasNext:  len(events) == pageSize,
+			PrevPage: page - 1,
+			NextPage: page + 1,
 		}
 		if err := table_tmpl.Execute(w, data); err != nil {
 			log.Printf("Error rendering table: %v", err)
