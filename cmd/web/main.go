@@ -143,22 +143,22 @@ func main() {
 
 	var (
 		sitemapMu    sync.Mutex
-		sitemapBytes []byte
 		sitemapLast  int64
 	)
 
-	getCachedSitemap := func() ([]byte, int64) {
+	getCachedSitemapID := func() int64 {
 		sitemapMu.Lock()
 		defer sitemapMu.Unlock()
-		return sitemapBytes, sitemapLast
+		return sitemapLast
 	}
 
-	setCachedSitemap := func(data []byte, lastID int64) {
+	setCachedSitemapID := func(lastID int64) {
 		sitemapMu.Lock()
 		defer sitemapMu.Unlock()
-		sitemapBytes = data
 		sitemapLast = lastID
 	}
+
+	const sitemapPath = "/tmp/sitemap.xml"
 
 	http.Handle("/", sentryMiddleware.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
 		filter := r.URL.Query().Get("chain")
@@ -266,10 +266,12 @@ func main() {
 			return
 		}
 
-		if cached, cachedID := getCachedSitemap(); cachedID == latestID && len(cached) > 0 {
-			w.Header().Set("Content-Type", "application/xml")
-			_, _ = w.Write(cached)
-			return
+		if cachedID := getCachedSitemapID(); cachedID == latestID {
+			if _, err := os.Stat(sitemapPath); err == nil {
+				w.Header().Set("Content-Type", "application/xml")
+				http.ServeFile(w, r, sitemapPath)
+				return
+			}
 		}
 
 		baseURL := "https://bl.dzen.ws"
@@ -313,12 +315,16 @@ func main() {
 		// Add XML header
 		output = append([]byte(xml.Header), output...)
 
-		setCachedSitemap(output, latestID)
+		if err := os.WriteFile(sitemapPath, output, 0o644); err != nil {
+			log.Printf("Error writing sitemap file: %v", err)
+			w.Header().Set("Content-Type", "application/xml")
+			_, _ = w.Write(output)
+			return
+		}
+		setCachedSitemapID(latestID)
 
 		w.Header().Set("Content-Type", "application/xml")
-		if _, err := w.Write(output); err != nil {
-			log.Printf("Error writing sitemap: %v", err)
-		}
+		http.ServeFile(w, r, sitemapPath)
 	}))
 
 	http.Handle("/robots.txt", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
