@@ -11,7 +11,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 50M
+          memory: 100M
   migration:
     build: .
     command: /app/migrate
@@ -39,7 +39,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 30M
+          memory: 100M
   watcher:
     build: .
     command: /app/watcher
@@ -51,7 +51,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 30M
+          memory: 50M
 
 volumes:
   bl-db-data:
