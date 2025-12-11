@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/xml"
 	"fmt"
 	"html/template"
 	"log"
@@ -10,9 +11,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
-	"encoding/xml"
 	"sync"
+	"time"
 
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
@@ -134,6 +134,9 @@ func main() {
 		case "zksync":
 			b := blwatcher.BlockchainZkSync
 			return &b
+		case "assethub":
+			b := blwatcher.BlockchainAssetHub
+			return &b
 		default:
 			return nil
 		}
@@ -142,8 +145,8 @@ func main() {
 	const pageSize = 200
 
 	var (
-		sitemapMu    sync.Mutex
-		sitemapLast  int64
+		sitemapMu   sync.Mutex
+		sitemapLast int64
 	)
 
 	getCachedSitemapID := func() int64 {
@@ -226,7 +229,7 @@ func main() {
 		feed := &feeds.Feed{
 			Title:       "Blacklist events of USDT/USDC across multiple blockchains",
 			Link:        &feeds.Link{Href: "https://bl.dzen.ws/rss", Rel: "self"},
-			Description: "Latest blacklist events of USDT/USDC on Ethereum, Arbitrum, Base, Optimism, Avalanche, Polygon, ZkSync and Tron networks",
+			Description: "Latest blacklist events of USDT/USDC on Ethereum, Arbitrum, Base, Optimism, Avalanche, Polygon, ZkSync, Asset Hub and Tron networks",
 		}
 
 		events, err := eventStorage.GetLatestEvents(250)
@@ -285,6 +288,7 @@ func main() {
 			{Loc: baseURL + "/?page=1&chain=avalanche"},
 			{Loc: baseURL + "/?page=1&chain=polygon"},
 			{Loc: baseURL + "/?page=1&chain=zksync"},
+			{Loc: baseURL + "/?page=1&chain=assethub"},
 			{Loc: baseURL + "/?page=1&chain=tron"},
 		}
 

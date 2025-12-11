@@ -131,7 +131,7 @@ func (w *tronWatcher) Watch(ctx context.Context) error {
 	}
 
 	lastSeenTs := w.blockTimestamp(ctx, lastSeenBlock)
-	log.Printf("[T] Start watching Tron events from block %d (min_ts=%d)\n", lastSeenBlock, lastSeenTs)
+	log.Printf("[TRON] Start watching events from block %d (min_ts=%d)\n", lastSeenBlock, lastSeenTs)
 
 	for {
 		select {

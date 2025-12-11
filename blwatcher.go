@@ -16,6 +16,7 @@ const (
 	BlockchainAvalanche Blockchain = "avalanche"
 	BlockchainPolygon   Blockchain = "polygon"
 	BlockchainZkSync    Blockchain = "zksync"
+	BlockchainAssetHub  Blockchain = "assethub"
 )
 
 const USDTContractAddress = "0xdac17f958d2ee523a2206206994597c13d831ec7"
@@ -30,6 +31,7 @@ const AvalancheUSDTContractAddress = "0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7
 const AvalancheUSDCContractAddress = "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e"
 const PolygonUSDCContractAddress = "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359"
 const ZkSyncUSDCContractAddress = "0x1d17cbcf0d6d143135ae902365d2e5e2a16538d4"
+const AssetHubUSDTAssetID = "1984"
 
 type Contract struct {
 	Address    string
@@ -109,6 +111,12 @@ var TronUSDTContract = Contract{
 	AbiJSON:    AddressContractMap[USDTContractAddress].AbiJSON,
 	Symbol:     "USDT",
 	Blockchain: BlockchainTron,
+}
+
+var AssetHubUSDTContract = Contract{
+	Address:    AssetHubUSDTAssetID,
+	Symbol:     "USDT",
+	Blockchain: BlockchainAssetHub,
 }
 
 type EventType string

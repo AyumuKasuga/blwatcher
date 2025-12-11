@@ -40,6 +40,8 @@ func main() {
 	avalancheNodeURL := os.Getenv("AVALANCHE_NODE_URL")
 	polygonNodeURL := os.Getenv("POLYGON_NODE_URL")
 	zksyncNodeURL := os.Getenv("ZKSYNC_NODE_URL")
+	assetHubIndexerURL := os.Getenv("ASSET_HUB_INDEXER_URL")
+	assetHubAPIKey := os.Getenv("ASSET_HUB_API_KEY")
 	connString := os.Getenv("DATABASE_URL")
 	if connString == "" {
 		connString = "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
@@ -112,6 +114,12 @@ func main() {
 		watchers = append(watchers, internal.NewZkSyncWatcher(zksyncContracts, zksyncNodeURL, eventChan, eventStorage))
 	} else {
 		log.Printf("ZKSYNC_NODE_URL not set, ZkSync watcher disabled")
+	}
+
+	if assetHubIndexerURL != "" {
+		watchers = append(watchers, internal.NewAssetHubWatcher(assetHubIndexerURL, assetHubAPIKey, eventChan, eventStorage))
+	} else {
+		log.Printf("ASSET_HUB_INDEXER_URL not set, Asset Hub watcher disabled")
 	}
 
 	if tronNodeURL := os.Getenv("TRON_NODE_URL"); tronNodeURL != "" {

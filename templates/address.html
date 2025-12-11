@@ -30,6 +30,7 @@
         .chain-poly { background: #8247e5; }
         .chain-zksync { background: #7d3cff; }
         .chain-tron { background: #c2171f; }
+        .chain-ah { background: #0f172a; }
         .donation-card {
             display: inline-block;
             width: auto;
@@ -41,7 +42,7 @@
 </head>
 <body>
 <div class="container py-3">
-    <h2>Blacklist events of {{.Address}} (Ethereum, Arbitrum, Base, Optimism, Avalanche, Polygon &amp; Tron)</h2>
+    <h2>Blacklist events of {{.Address}} (Ethereum, Arbitrum, Base, Optimism, Avalanche, Polygon, ZkSync, Asset Hub &amp; Tron)</h2>
     <div class="d-flex flex-row mb-3">
         <div class="p-2">
             <a href="/" class="btn btn-primary"> 🏠 </a>
@@ -71,6 +72,7 @@
                     {{else if eq .Blockchain "avalanche"}}<span class="chain-icon chain-avax" title="Avalanche">AV</span>
                     {{else if eq .Blockchain "polygon"}}<span class="chain-icon chain-poly" title="Polygon">P</span>
                     {{else if eq .Blockchain "zksync"}}<span class="chain-icon chain-zksync" title="ZkSync">ZK</span>
+                    {{else if eq .Blockchain "assethub"}}<span class="chain-icon chain-ah" title="Asset Hub">AH</span>
                     {{else}}<span class="chain-icon chain-eth" title="Ethereum">E</span>
                     {{end}}
                 </td>
@@ -96,6 +98,8 @@
                     <a target="_blank" href="https://polygonscan.com/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
                     {{else if eq .Blockchain "zksync"}}
                     <a target="_blank" href="https://explorer.zksync.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
+                    {{else if eq .Blockchain "assethub"}}
+                    <a target="_blank" href="https://assethub-polkadot.subscan.io/event/{{.Tx}}">{{.Tx}}</a>
                     {{else}}
                     <a target="_blank" href="https://etherscan.io/tx/{{.Tx}}">{{slice .Tx 0 10}}</a>
                     {{end}}
