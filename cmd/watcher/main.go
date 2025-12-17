@@ -153,7 +153,10 @@ func main() {
 				prefix := strings.ToUpper(watcher.Name())
 				log.Printf("[%s] Watcher error: %v; retrying in 1 minute", prefix, err)
 				if sentryDSN != "" {
-					sentry.CaptureException(err)
+					sentry.WithScope(func(scope *sentry.Scope) {
+						scope.SetTag("watcher", watcher.Name())
+						sentry.CaptureException(err)
+					})
 					sentry.Flush(5 * time.Second)
 				}
 				select {
