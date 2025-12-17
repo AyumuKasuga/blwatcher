@@ -146,11 +146,20 @@ func NewZkSyncWatcher(
 	return newEVMWatcher(blwatcher.BlockchainZkSync, contracts, rpcURL, eventChan, eventStorage)
 }
 
+func (w *evmWatcher) Name() string {
+	return string(w.blockchain)
+}
+
 func (w *evmWatcher) prefix() string {
-	if len(w.blockchain) == 0 {
+	name := w.Name()
+	if name == "" {
 		return "[?]"
 	}
-	return "[" + strings.ToUpper(string(w.blockchain)) + "]"
+	return "[" + strings.ToUpper(name) + "]"
+}
+
+func (w *evmWatcher) errorf(format string, args ...interface{}) error {
+	return fmt.Errorf("%s "+format, append([]interface{}{w.prefix()}, args...)...)
 }
 
 func (w *evmWatcher) Watch(ctx context.Context) error {
@@ -178,12 +187,10 @@ func (w *evmWatcher) Watch(ctx context.Context) error {
 	}
 	defer sub.Unsubscribe()
 
-	go func(ctx context.Context, client *ethclient.Client, fromBlock uint64) {
-		err := w.processPastEvents(ctx, client, query)
-		if err != nil {
-			panic(err)
-		}
-	}(ctx, client, fromBlock)
+	watchErr := w.processPastEvents(ctx, client, query)
+	if watchErr != nil {
+		return watchErr
+	}
 
 	log.Printf("%s Start watching from block %d\n", w.prefix(), fromBlock)
 
@@ -229,7 +236,7 @@ func (w *evmWatcher) processLogs(ctx context.Context, client *ethclient.Client, 
 
 	header, err := client.HeaderByNumber(ctx, big.NewInt(int64(vLog.BlockNumber)))
 	if err != nil {
-		return fmt.Errorf("failed to fetch block header for %d: %w", vLog.BlockNumber, err)
+		return w.errorf("failed to fetch block header for %d: %w", vLog.BlockNumber, err)
 	}
 	blockDate := time.Unix(int64(header.Time), 0)
 
@@ -242,12 +249,12 @@ func (w *evmWatcher) processLogs(ctx context.Context, client *ethclient.Client, 
 	contract, found := w.contractMap[contractAddress]
 	if !found {
 		// Should not be possible
-		return fmt.Errorf("unknown contract address %s", contractAddress)
+		return w.errorf("unknown contract address %s", contractAddress)
 	}
 
 	t, found := topics[topic]
 	if !found {
-		return fmt.Errorf("unknown topic %s", topic.String())
+		return w.errorf("unknown topic %s", topic.String())
 	}
 	var address common.Address
 	event, err := w.contractAbiMap[vLog.Address].Unpack(t.funcName, vLog.Data)
@@ -284,7 +291,7 @@ func (w *evmWatcher) handleSubmission(ctx context.Context, client *ethclient.Cli
 	}
 
 	if len(vLog.Topics) < 2 {
-		return fmt.Errorf("submission log missing transaction id")
+		return w.errorf("submission log missing transaction id")
 	}
 
 	txID := vLog.Topics[1].Big()
@@ -336,13 +343,13 @@ func (w *evmWatcher) getMultisigTransaction(ctx context.Context, client *ethclie
 		return common.Address{}, nil, err
 	}
 	if len(output) < 3 {
-		return common.Address{}, nil, fmt.Errorf("unexpected transactions output length")
+		return common.Address{}, nil, w.errorf("unexpected transactions output length")
 	}
 
 	destination := output[0].(common.Address)
 	dataBytes, ok := output[2].([]byte)
 	if !ok {
-		return common.Address{}, nil, fmt.Errorf("unexpected data type for multisig tx data")
+		return common.Address{}, nil, w.errorf("unexpected data type for multisig tx data")
 	}
 
 	return destination, dataBytes, nil
@@ -356,7 +363,7 @@ func (w *evmWatcher) decodeUSDTBlacklistData(data []byte) (common.Address, bool,
 	usdtABI := w.contractAbiMap[common.HexToAddress(blwatcher.USDTContractAddress)]
 	method, ok := usdtABI.Methods["addBlackList"]
 	if !ok {
-		return common.Address{}, false, fmt.Errorf("addBlackList method missing in ABI")
+		return common.Address{}, false, w.errorf("addBlackList method missing in ABI")
 	}
 	if !bytes.Equal(data[:4], method.ID) {
 		return common.Address{}, false, nil
@@ -372,7 +379,7 @@ func (w *evmWatcher) decodeUSDTBlacklistData(data []byte) (common.Address, bool,
 
 	address, ok := args[0].(common.Address)
 	if !ok {
-		return common.Address{}, false, fmt.Errorf("unexpected type for addBlackList argument")
+		return common.Address{}, false, w.errorf("unexpected type for addBlackList argument")
 	}
 
 	return address, true, nil

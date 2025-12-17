@@ -148,4 +148,5 @@ type AddressLastDate struct {
 
 type Watcher interface {
 	Watch(ctx context.Context) error
+	Name() string
 }

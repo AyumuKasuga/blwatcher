@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -55,6 +56,7 @@ func main() {
 		connString,
 	)
 	eventChan := make(chan *blwatcher.Event)
+
 	watchers := []blwatcher.Watcher{
 		internal.NewWatcher(ethContracts, ethNodeURL, eventChan, eventStorage),
 	}
@@ -143,13 +145,22 @@ func main() {
 		wg.Add(1)
 		go func(ctx context.Context, watcher blwatcher.Watcher) {
 			defer wg.Done()
-			err := watcher.Watch(ctx)
-			if err != nil {
+			for {
+				err := watcher.Watch(ctx)
+				if err == nil {
+					return
+				}
+				prefix := strings.ToUpper(watcher.Name())
+				log.Printf("[%s] Watcher error: %v; retrying in 1 minute", prefix, err)
 				if sentryDSN != "" {
 					sentry.CaptureException(err)
-					sentry.Flush(2 * time.Second)
+					sentry.Flush(5 * time.Second)
 				}
-				panic(err)
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(1 * time.Minute):
+				}
 			}
 		}(ctx, watcher)
 	}

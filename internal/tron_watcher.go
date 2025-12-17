@@ -81,7 +81,7 @@ func NewTronWatcher(
 	for _, contract := range contracts {
 		normalizedAddr, err := normalizeTronHex(contract.Address)
 		if err != nil {
-			panic(err)
+			panic(fmt.Errorf("[TRON] %w", err))
 		}
 		contract.Address = normalizedAddr
 		if contract.Blockchain == "" {
@@ -111,6 +111,22 @@ func NewTronWatcher(
 	}
 }
 
+func (w *tronWatcher) Name() string {
+	return string(blwatcher.BlockchainTron)
+}
+
+func (w *tronWatcher) prefix() string {
+	name := w.Name()
+	if name == "" {
+		return "[?]"
+	}
+	return "[" + strings.ToUpper(name) + "]"
+}
+
+func (w *tronWatcher) errorf(format string, args ...interface{}) error {
+	return fmt.Errorf("%s "+format, append([]interface{}{w.prefix()}, args...)...)
+}
+
 func (w *tronWatcher) Watch(ctx context.Context) error {
 	fromBlock, err := w.eventStorage.GetLastEventBlock(blwatcher.BlockchainTron)
 	if err != nil {
@@ -131,7 +147,7 @@ func (w *tronWatcher) Watch(ctx context.Context) error {
 	}
 
 	lastSeenTs := w.blockTimestamp(ctx, lastSeenBlock)
-	log.Printf("[T] Start watching Tron events from block %d (min_ts=%d)\n", lastSeenBlock, lastSeenTs)
+	log.Printf("%s Start watching Tron events from block %d (min_ts=%d)\n", w.prefix(), lastSeenBlock, lastSeenTs)
 
 	for {
 		select {
@@ -147,7 +163,7 @@ func (w *tronWatcher) Watch(ctx context.Context) error {
 			for _, evName := range w.contractEventNames(contract) {
 				events, err := w.fetchEvents(ctx, addr, evName, lastSeenTs)
 				if err != nil {
-					log.Printf("[T] failed to fetch events for %s %s: %v", contract.Symbol, evName, err)
+					log.Printf("%s failed to fetch events for %s %s: %v", w.prefix(), contract.Symbol, evName, err)
 					continue
 				}
 				for _, ev := range events {
@@ -155,7 +171,7 @@ func (w *tronWatcher) Watch(ctx context.Context) error {
 						continue
 					}
 					if err := w.emitEvent(ev, contract); err != nil {
-						log.Printf("[T] failed to process event %+v: %v", ev, err)
+						log.Printf("%s failed to process event %+v: %v", w.prefix(), ev, err)
 						continue
 					}
 					if ev.BlockNumber > maxSeenBlock {
@@ -182,7 +198,7 @@ func (w *tronWatcher) emitEvent(ev tronEvent, contract blwatcher.Contract) error
 
 	address := w.extractAddress(ev)
 	if address == "" {
-		return fmt.Errorf("unable to extract address from event %s", ev.EventName)
+		return w.errorf("unable to extract address from event %s", ev.EventName)
 	}
 
 	var amount int64
@@ -350,7 +366,7 @@ func (w *tronWatcher) post(ctx context.Context, path string, payload interface{}
 	}()
 	if resp.StatusCode >= http.StatusBadRequest {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("[T] tron api %s returned status %d: %s", path, resp.StatusCode, strings.TrimSpace(string(body)))
+		return w.errorf("tron api %s returned status %d: %s", path, resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 
 	return json.NewDecoder(resp.Body).Decode(result)
@@ -375,7 +391,7 @@ func (w *tronWatcher) get(ctx context.Context, path string, result interface{}) 
 	}()
 	if resp.StatusCode >= http.StatusBadRequest {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("[T] tron api %s returned status %d: %s", path, resp.StatusCode, strings.TrimSpace(string(body)))
+		return w.errorf("tron api %s returned status %d: %s", path, resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 
 	return json.NewDecoder(resp.Body).Decode(result)
