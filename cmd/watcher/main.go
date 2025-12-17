@@ -32,6 +32,9 @@ func main() {
 					sentry.Flush(time.Second * 2)
 				}
 			}()
+
+			defer sentry.Flush(2 * time.Second)
+			defer sentry.Recover()
 		}
 	}
 
