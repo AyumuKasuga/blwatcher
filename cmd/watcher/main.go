@@ -15,8 +15,6 @@ import (
 )
 
 func main() {
-	defer sentry.Recover()
-
 	sentryDSN := os.Getenv("SENTRY_DSN")
 	if sentryDSN != "" {
 		err := sentry.Init(sentry.ClientOptions{
@@ -27,8 +25,13 @@ func main() {
 		if err != nil {
 			log.Printf("Failed to initialize Sentry: %v", err)
 		} else {
-			defer sentry.Flush(2 * time.Second)
-			defer sentry.Recover()
+			defer func() {
+				err := recover()
+				if err != nil {
+					sentry.CurrentHub().Recover(err)
+					sentry.Flush(time.Second * 2)
+				}
+			}()
 		}
 	}
 
