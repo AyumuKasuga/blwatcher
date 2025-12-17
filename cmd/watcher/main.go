@@ -25,15 +25,7 @@ func main() {
 		if err != nil {
 			log.Printf("Failed to initialize Sentry: %v", err)
 		} else {
-			defer func() {
-				err := recover()
-				if err != nil {
-					sentry.CurrentHub().Recover(err)
-					sentry.Flush(time.Second * 2)
-				}
-			}()
-
-			defer sentry.Flush(2 * time.Second)
+			defer sentry.Flush(5 * time.Second)
 			defer sentry.Recover()
 		}
 	}
