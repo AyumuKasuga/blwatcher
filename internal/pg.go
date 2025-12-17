@@ -19,9 +19,6 @@ func NewEventStorage(ctx context.Context, connString string) blwatcher.EventStor
 	if err != nil {
 		panic(err)
 	}
-	if err != nil {
-		panic(err)
-	}
 	err = dbpool.Ping(ctx)
 	if err != nil {
 		panic(err)
