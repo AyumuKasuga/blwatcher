@@ -41,6 +41,7 @@ func main() {
 	avalancheNodeURL := os.Getenv("AVALANCHE_NODE_URL")
 	polygonNodeURL := os.Getenv("POLYGON_NODE_URL")
 	zksyncNodeURL := os.Getenv("ZKSYNC_NODE_URL")
+	lineaNodeURL := os.Getenv("LINEA_NODE_URL")
 	connString := os.Getenv("DATABASE_URL")
 	if connString == "" {
 		connString = "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
@@ -114,6 +115,15 @@ func main() {
 		watchers = append(watchers, internal.NewZkSyncWatcher(zksyncContracts, zksyncNodeURL, eventChan, eventStorage))
 	} else {
 		log.Printf("ZKSYNC_NODE_URL not set, ZkSync watcher disabled")
+	}
+
+	if lineaNodeURL != "" {
+		lineaContracts := []blwatcher.Contract{
+			blwatcher.AddressContractMap[blwatcher.LineaUSDCContractAddress],
+		}
+		watchers = append(watchers, internal.NewLineaWatcher(lineaContracts, lineaNodeURL, eventChan, eventStorage))
+	} else {
+		log.Printf("LINEA_NODE_URL not set, Linea watcher disabled")
 	}
 
 	if tronNodeURL := os.Getenv("TRON_NODE_URL"); tronNodeURL != "" {

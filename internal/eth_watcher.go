@@ -146,6 +146,15 @@ func NewZkSyncWatcher(
 	return newEVMWatcher(blwatcher.BlockchainZkSync, contracts, rpcURL, eventChan, eventStorage)
 }
 
+func NewLineaWatcher(
+	contracts []blwatcher.Contract,
+	rpcURL string,
+	eventChan chan *blwatcher.Event,
+	eventStorage blwatcher.EventStorage,
+) blwatcher.Watcher {
+	return newEVMWatcher(blwatcher.BlockchainLinea, contracts, rpcURL, eventChan, eventStorage)
+}
+
 func (w *evmWatcher) Name() string {
 	return string(w.blockchain)
 }
