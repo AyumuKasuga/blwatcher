@@ -15,6 +15,8 @@ import (
 )
 
 func main() {
+	defer sentry.Recover()
+
 	sentryDSN := os.Getenv("SENTRY_DSN")
 	if sentryDSN != "" {
 		err := sentry.Init(sentry.ClientOptions{
