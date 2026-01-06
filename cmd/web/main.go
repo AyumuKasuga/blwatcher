@@ -336,6 +336,15 @@ func main() {
 	http.Handle("/favicon.ico", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "static/favicon.ico")
 	}))
+	http.Handle("/apple-touch-icon.png", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/apple-touch-icon.png")
+	}))
+	http.Handle("/android-chrome-192x192.png", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/android-chrome-192x192.png")
+	}))
+	http.Handle("/android-chrome-512x512.png", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/android-chrome-512x512.png")
+	}))
 
 	http.Handle("/robots.txt", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
