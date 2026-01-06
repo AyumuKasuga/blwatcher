@@ -333,6 +333,10 @@ func main() {
 		http.ServeFile(w, r, sitemapPath)
 	}))
 
+	http.Handle("/favicon.ico", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/favicon.ico")
+	}))
+
 	http.Handle("/robots.txt", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		_, _ = w.Write([]byte("User-agent: *\nAllow: /\nSitemap: https://bl.dzen.ws/sitemap.xml\n"))
