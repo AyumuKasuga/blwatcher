@@ -98,8 +98,9 @@ func main() {
 	}
 
 	type urlEntry struct {
-		Loc     string `xml:"loc"`
-		LastMod string `xml:"lastmod,omitempty"`
+		Loc        string `xml:"loc"`
+		LastMod    string `xml:"lastmod,omitempty"`
+		ChangeFreq string `xml:"changefreq,omitempty"`
 	}
 
 	type urlSet struct {
@@ -280,7 +281,8 @@ func main() {
 		baseURL := "https://bl.dzen.ws"
 
 		urls := []urlEntry{
-			{Loc: baseURL + "/"},
+			{Loc: baseURL + "/", ChangeFreq: "daily"},
+			{Loc: baseURL + "/rss", ChangeFreq: "daily"},
 			{Loc: baseURL + "/?page=1&chain=ethereum"},
 			{Loc: baseURL + "/?page=1&chain=arbitrum"},
 			{Loc: baseURL + "/?page=1&chain=base"},
