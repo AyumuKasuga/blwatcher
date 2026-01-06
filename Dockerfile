@@ -22,3 +22,4 @@ COPY --from=builder /build/migrate ./migrate
 COPY --from=builder /build/watcher ./watcher
 COPY --from=builder /build/web ./web
 COPY --from=builder /build/templates ./templates
+COPY --from=builder /build/static ./static
