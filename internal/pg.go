@@ -103,7 +103,7 @@ func (s *EventStorage) GetLatestEventsFiltered(limit uint64, offset uint64, bloc
 	if limit == 0 {
 		limit = 200
 	}
-	args := []interface{}{limit, offset}
+	args := []any{limit, offset}
 	query := `
 		SELECT blockchain, date, contract, address, tx_hash, block_number, event_type, amount
 		FROM events

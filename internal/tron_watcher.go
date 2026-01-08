@@ -123,8 +123,8 @@ func (w *tronWatcher) prefix() string {
 	return "[" + strings.ToUpper(name) + "]"
 }
 
-func (w *tronWatcher) errorf(format string, args ...interface{}) error {
-	return fmt.Errorf("%s "+format, append([]interface{}{w.prefix()}, args...)...)
+func (w *tronWatcher) errorf(format string, args ...any) error {
+	return fmt.Errorf("%s "+format, append([]any{w.prefix()}, args...)...)
 }
 
 func (w *tronWatcher) Watch(ctx context.Context) error {
@@ -310,7 +310,7 @@ func (w *tronWatcher) fetchEvents(ctx context.Context, contractAddr string, even
 
 func (w *tronWatcher) getLatestBlockNumber(ctx context.Context) (uint64, error) {
 	var now tronNowBlock
-	err := w.post(ctx, "/wallet/getnowblock", map[string]interface{}{
+	err := w.post(ctx, "/wallet/getnowblock", map[string]any{
 		"visible": true,
 	}, &now)
 	if err != nil {
@@ -321,7 +321,7 @@ func (w *tronWatcher) getLatestBlockNumber(ctx context.Context) (uint64, error) 
 
 func (w *tronWatcher) getBlockByNumber(ctx context.Context, num uint64) (*tronBlock, error) {
 	var block tronBlock
-	err := w.post(ctx, "/wallet/getblockbynum", map[string]interface{}{
+	err := w.post(ctx, "/wallet/getblockbynum", map[string]any{
 		"num":     num,
 		"visible": true,
 	}, &block)
@@ -342,7 +342,7 @@ func (w *tronWatcher) blockTimestamp(ctx context.Context, blockNumber uint64) in
 	return block.BlockHeader.RawData.Timestamp
 }
 
-func (w *tronWatcher) post(ctx context.Context, path string, payload interface{}, result interface{}) error {
+func (w *tronWatcher) post(ctx context.Context, path string, payload any, result any) error {
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return err
@@ -372,7 +372,7 @@ func (w *tronWatcher) post(ctx context.Context, path string, payload interface{}
 	return json.NewDecoder(resp.Body).Decode(result)
 }
 
-func (w *tronWatcher) get(ctx context.Context, path string, result interface{}) error {
+func (w *tronWatcher) get(ctx context.Context, path string, result any) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, w.apiURL+path, nil)
 	if err != nil {
 		return err

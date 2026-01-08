@@ -167,8 +167,8 @@ func (w *evmWatcher) prefix() string {
 	return "[" + strings.ToUpper(name) + "]"
 }
 
-func (w *evmWatcher) errorf(format string, args ...interface{}) error {
-	return fmt.Errorf("%s "+format, append([]interface{}{w.prefix()}, args...)...)
+func (w *evmWatcher) errorf(format string, args ...any) error {
+	return fmt.Errorf("%s "+format, append([]any{w.prefix()}, args...)...)
 }
 
 func (w *evmWatcher) Watch(ctx context.Context) error {
