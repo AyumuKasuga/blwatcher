@@ -1,3 +1,5 @@
 .env
 .idea
 bin/
+.DS_Store
+.claude
